@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Lyrics</string>
+    <string name="loading">Laden…</string>
+    <string name="action_refresh">Aktualisieren</string>
+    <string name="action_forcereload">Neuladen von genius.com</string>
+    <string name="action_exit">Beenden</string>
+    <string name="by_artist">von</string>
+    <string name="sorry">Sorry!</string>
+    <string name="please_select_lyrics">Bitte das korrekte Lied auswählen:</string>
+</resources>
