@@ -11,6 +11,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -24,6 +25,7 @@ public class LyricsViewActivity extends AppCompatActivity {
     private Genius G;
     private String currentArtist = null;
     private String currentTitle = null;
+    private float fontSize = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +68,10 @@ public class LyricsViewActivity extends AppCompatActivity {
         }
 
         registerReceiver(mReceiver, iF);
+
+
+        fontSize = ((TextView) findViewById(R.id.result)).getTextSize();
+
     }
 
     @Override
@@ -104,6 +110,18 @@ public class LyricsViewActivity extends AppCompatActivity {
                 System.gc();
                 System.exit(0);
                 break;
+
+            case R.id.action_makeFontBigger:
+                fontSize *= 1.1f;
+                ((TextView) findViewById(R.id.result)).setTextSize(TypedValue.COMPLEX_UNIT_PX, fontSize);
+                break;
+
+            case R.id.action_makeFontSmaller:
+                fontSize *= 0.9f;
+                ((TextView) findViewById(R.id.result)).setTextSize(TypedValue.COMPLEX_UNIT_PX, fontSize);
+                break;
+
+
             default:
                 break;
         }
@@ -263,15 +281,21 @@ public class LyricsViewActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Lyrics result) {
             super.onPostExecute(result);
+
+            TextView textViewResult = (TextView) findViewById(R.id.result);
             if (result.status()) {
-                ((TextView) findViewById(R.id.result)).setText(multiTrim(result.getLyrics()));
+                textViewResult.setText(multiTrim(result.getLyrics()));
+
                 getSupportActionBar().setTitle(result.getArtist() + " - " + result.getTitle());
                 getSupportActionBar().setSubtitle("");
+
+                // Scroll to top
+                findViewById(R.id.scrollView).scrollTo(0,0);
             } else {
                 if (result.getErrorMessage().equals("#multipleresults")) {
                     showSongSelector(result);
                 } else {
-                    ((TextView) findViewById(R.id.result)).setText("");
+                    textViewResult.setText("");
                     getSupportActionBar().setTitle(result.getErrorMessage());
                     getSupportActionBar().setSubtitle(R.string.sorry);
                 }
