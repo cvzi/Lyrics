@@ -72,6 +72,22 @@ public class LyricsViewActivity extends AppCompatActivity {
 
         fontSize = ((TextView) findViewById(R.id.result)).getTextSize();
 
+        if(savedInstanceState != null) {
+            currentArtist = savedInstanceState.getString("currentArtist", null);
+            currentTitle = savedInstanceState.getString("currentTitle", null);
+        }
+
+        if(currentArtist != null && currentTitle != null) {
+            loadLyrics(currentArtist, currentTitle);
+        }
+
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        savedInstanceState.putString("currentTitle", currentTitle);
+        savedInstanceState.putString("currentArtist", currentArtist);
     }
 
     @Override
