@@ -1,8 +1,6 @@
 package sexy.lyrics;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -26,6 +24,7 @@ public class LyricsViewActivity extends AppCompatActivity {
     private String currentArtist = null;
     private String currentTitle = null;
     private float fontSize = 0;
+    private MusicBroadcastReceiver mReceiver = new MusicBroadcastReceiver();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +66,7 @@ public class LyricsViewActivity extends AppCompatActivity {
             }
         }
 
+        mReceiver.setActivity(this);
         registerReceiver(mReceiver, iF);
 
 
@@ -79,6 +79,12 @@ public class LyricsViewActivity extends AppCompatActivity {
 
         if(currentArtist != null && currentTitle != null) {
             loadLyrics(currentArtist, currentTitle);
+        } else {
+            if(mReceiver.hasSong()) {
+                currentTitle = mReceiver.getTrack();
+                currentArtist = mReceiver.getArtist();
+                loadLyrics(currentArtist, currentTitle);
+            }
         }
 
     }
@@ -144,45 +150,11 @@ public class LyricsViewActivity extends AppCompatActivity {
         return true;
     }
 
-
-    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
-        private String last;
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String artist;
-            String track;
-            String album;
-
-            String action = intent.getAction();
-
-            Log.v("Receiver", action);
-
-            try {
-                if (action.equals("com.amazon.mp3.metachanged")) {
-                    artist = intent.getStringExtra("com.amazon.mp3.artist");
-                    track = intent.getStringExtra("com.amazon.mp3.track");
-                    album = intent.getStringExtra("com.amazon.mp3.album");
-                } else {
-                    artist = intent.getStringExtra("artist");
-                    track = intent.getStringExtra("track");
-                    album = intent.getStringExtra("album");
-                }
-            } catch (Throwable e) {
-                return;
-            }
-            if (last == null || !last.equals(artist + ":" + album + ":" + track)) {
-                last = artist + ":" + album + ":" + track;
-                loadLyrics(artist, track);
-            }
-        }
-    };
-
-    private void loadLyrics(String localArtist, String localTitle) {
+    public void loadLyrics(String localArtist, String localTitle) {
         loadLyrics(localArtist, localTitle, true);
     }
 
-    private void loadLyrics(String localArtist, String localTitle, boolean useCache) {
+    public void loadLyrics(String localArtist, String localTitle, boolean useCache) {
         currentArtist = localArtist;
         currentTitle = localTitle;
 
