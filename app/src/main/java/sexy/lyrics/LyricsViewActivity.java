@@ -156,6 +156,8 @@ public class LyricsViewActivity extends AppCompatActivity {
 
             String action = intent.getAction();
 
+            Log.v("Receiver", action);
+
             try {
                 if (action.equals("com.amazon.mp3.metachanged")) {
                     artist = intent.getStringExtra("com.amazon.mp3.artist");
@@ -183,6 +185,10 @@ public class LyricsViewActivity extends AppCompatActivity {
     private void loadLyrics(String localArtist, String localTitle, boolean useCache) {
         currentArtist = localArtist;
         currentTitle = localTitle;
+
+        if (localArtist == null || localTitle == null || localArtist.length() == 0 || localTitle.length() == 0) {
+            return;
+        }
 
         hideSongSelector();
 

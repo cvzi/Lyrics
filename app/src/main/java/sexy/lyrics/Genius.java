@@ -48,6 +48,10 @@ public class Genius {
     }
 
     public Lyrics fromCache(String localArtist, String localTitle) {
+        if (localArtist == null || localTitle == null || localArtist.length() == 0 || localTitle.length() == 0) {
+            return null;
+        }
+
         String sql = "SELECT songs.json " +
                 "FROM localtracks, songs " +
                 "WHERE localtracks.geniusid = songs.geniusid " +
