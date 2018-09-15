@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="sexy.lyrics">
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -13,7 +14,7 @@
         android:theme="@style/Theme.AppCompat">
         <meta-data
             android:name=".geniusClientAccessToken"
-            android:value=" TODO add your genius API key here " />
+            android:value="ZTejoT_ojOEasIkT9WrMBhBQOz6eYKK5QULCMECmOhvwqjRZ6WbpamFe3geHnvp3" />
 
         <activity android:name=".LyricsViewActivity">
             <intent-filter>
@@ -22,6 +23,41 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <receiver
+            android:name=".MusicBroadcastReceiver"
+            tools:ignore="EportedReceiver">
+            <intent-filter>
+                <action android:name="com.amazon.mp3.metachanged" />
+                <action android:name="com.amazon.mp3.playstatechanged" />
+                <action android:name="com.andrew.apollo.metachanged" />
+                <action android:name="com.andrew.apollo.playstatechanged" />
+                <action android:name="com.android.music.metachanged" />
+                <action android:name="com.android.music.playstatechanged" />
+                <action android:name="com.htc.music.metachanged" />
+                <action android:name="com.htc.music.playstatechanged" />
+                <action android:name="com.miui.player.metachanged" />
+                <action android:name="com.miui.player.playstatechanged" />
+                <action android:name="com.nullsoft.winamp.metachanged" />
+                <action android:name="com.nullsoft.winamp.playstatechanged" />
+                <action android:name="com.samsung.sec.android.MusicPlayer" />
+                <action android:name="com.samsung.sec.android.MusicPlayer.playstatechanged" />
+                <action android:name="com.sec.android.app.music.metachanged" />
+                <action android:name="com.sec.android.app.music.playstatechanged" />
+                <action android:name="com.sonyericsson.music.metachanged" />
+                <action android:name="com.sonyericsson.music.playstatechanged" />
+                <action android:name="com.spotify.music.metachanged" />
+                <action android:name="com.spotify.music.playstatechanged" />
+                <action android:name="com.real.IMP.metachanged" />
+                <action android:name="com.real.IMP.playstatechanged" />
+                <action android:name="com.rdio.android.metachanged" />
+                <action android:name="com.rdio.android.playstatechanged" />
+                <action android:name="fm.last.android.metachanged" />
+                <action android:name="fm.last.android.playstatechanged" />
+            </intent-filter>
+        </receiver>
+
+
     </application>
 
 </manifest>
