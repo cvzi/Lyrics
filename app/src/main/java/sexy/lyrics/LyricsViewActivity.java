@@ -2,14 +2,17 @@ package sexy.lyrics;
 
 import android.content.Context;
 import android.content.IntentFilter;
+import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.os.SystemClock;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -25,6 +28,7 @@ public class LyricsViewActivity extends AppCompatActivity {
     private String currentTitle = null;
     private float fontSize = 0;
     private MusicBroadcastReceiver mReceiver = new MusicBroadcastReceiver();
+    private AudioManager mAudioManager = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,22 +76,40 @@ public class LyricsViewActivity extends AppCompatActivity {
 
         fontSize = ((TextView) findViewById(R.id.result)).getTextSize();
 
-        if(savedInstanceState != null) {
+        if (savedInstanceState != null) {
             currentArtist = savedInstanceState.getString("currentArtist", null);
             currentTitle = savedInstanceState.getString("currentTitle", null);
         }
 
-        if(currentArtist != null && currentTitle != null) {
+        if (currentArtist != null && currentTitle != null) {
+            loadLyrics(currentArtist, currentTitle);
+        } else if (mReceiver.hasSong()) {
+            currentTitle = mReceiver.getTrack();
+            currentArtist = mReceiver.getArtist();
             loadLyrics(currentArtist, currentTitle);
         } else {
-            if(mReceiver.hasSong()) {
-                currentTitle = mReceiver.getTrack();
-                currentArtist = mReceiver.getArtist();
-                loadLyrics(currentArtist, currentTitle);
-            }
+            // Pause and immediately play music to trigger a broadcast of the current song
+            sendMediaButton(getApplicationContext(), KeyEvent.KEYCODE_MEDIA_PAUSE);
+            sendMediaButton(getApplicationContext(), KeyEvent.KEYCODE_MEDIA_PLAY);
         }
 
     }
+
+
+    private void sendMediaButton(Context context, int keyCode) {
+        if(mAudioManager == null) {
+            mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        }
+        long eventTime = SystemClock.uptimeMillis();
+
+        KeyEvent downEvent = new KeyEvent(eventTime, eventTime, KeyEvent.ACTION_DOWN, keyCode, 0);
+        mAudioManager.dispatchMediaKeyEvent(downEvent);
+
+        // Not necessary ?
+        // KeyEvent upEvent = new KeyEvent(eventTime, eventTime, KeyEvent.ACTION_UP, keyCode, 0);
+        // mAudioManager.dispatchMediaKeyEvent(upEvent);
+    }
+
 
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
