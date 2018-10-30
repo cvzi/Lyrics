@@ -22,7 +22,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 public class LyricsViewActivity extends AppCompatActivity {
-    private IntentFilter iF;
     private Genius G;
     private String currentArtist = null;
     private String currentTitle = null;
@@ -62,7 +61,7 @@ public class LyricsViewActivity extends AppCompatActivity {
                 "metachanged", "playstatechange", "playstatechanged", "playbackstatechanged", "queuechanged"
         };
 
-        iF = new IntentFilter();
+        IntentFilter iF = new IntentFilter();
 
         for (String app : musicApps) {
             for (String action : musicActions) {

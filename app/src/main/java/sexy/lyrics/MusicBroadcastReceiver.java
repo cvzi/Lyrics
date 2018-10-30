@@ -32,7 +32,7 @@ public class MusicBroadcastReceiver extends BroadcastReceiver {
         String action = intent.getAction();
 
         try {
-            if (action.equals("com.amazon.mp3.metachanged")) {
+            if ("com.amazon.mp3.metachanged".equals(action)) {
                 artist = intent.getStringExtra("com.amazon.mp3.artist");
                 track = intent.getStringExtra("com.amazon.mp3.track");
                 album = intent.getStringExtra("com.amazon.mp3.album");
