@@ -14,7 +14,7 @@
         android:theme="@style/Theme.AppCompat">
         <meta-data
             android:name=".geniusClientAccessToken"
-            android:value="ZTejoT_ojOEasIkT9WrMBhBQOz6eYKK5QULCMECmOhvwqjRZ6WbpamFe3geHnvp3" />
+            android:value="{APIKEY}" />
 
         <activity android:name=".LyricsViewActivity">
             <intent-filter>
