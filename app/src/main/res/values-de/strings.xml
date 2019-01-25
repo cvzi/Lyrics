@@ -7,4 +7,6 @@
     <string name="by_artist">von</string>
     <string name="sorry">Sorry!</string>
     <string name="please_select_lyrics">Bitte das korrekte Lied auswählen:</string>
+    <string name="action_makeFontSmaller">Schrift kleiner</string>
+    <string name="action_makeFontBigger">Schrift größer</string>
 </resources>

@@ -12,11 +12,13 @@
     <item
         android:id="@+id/action_makeFontBigger"
         android:title="@string/action_makeFontBigger"
+        android:titleCondensed="@string/action_makeFontBiggerCondensed"
         app:showAsAction="ifRoom"/>
 
     <item
         android:id="@+id/action_makeFontSmaller"
         android:title="@string/action_makeFontSmaller"
+        android:titleCondensed="@string/action_makeFontSmallerCondensed"
         app:showAsAction="ifRoom"/>
 
     <!-- Settings, should always be in the overflow -->

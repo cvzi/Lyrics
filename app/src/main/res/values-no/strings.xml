@@ -8,4 +8,6 @@
     <string name="sorry">Sorry!</string>
     <string name="by_artist">fra</string>
     <string name="please_select_lyrics">Velge riktig sang:</string>
+    <string name="action_makeFontSmaller">Redusere skriftstørrelsen</string>
+    <string name="action_makeFontBigger">Øke skriftstørrelsen</string>
 </resources>

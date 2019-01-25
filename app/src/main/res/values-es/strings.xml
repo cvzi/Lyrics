@@ -4,7 +4,9 @@
     <string name="action_refresh">Actualizar</string>
     <string name="action_forcereload">Descargar de genius.com</string>
     <string name="action_exit">Salir</string>
-    <string name="sorry">	¡Perdón!</string>
+    <string name="sorry">¡Perdón!</string>
     <string name="by_artist">de</string>
     <string name="please_select_lyrics">Por favor, elige la canción correcta:</string>
+    <string name="action_makeFontBigger">Aumentar fuente</string>
+    <string name="action_makeFontSmaller">Reducir fuente</string>
 </resources>
