@@ -74,6 +74,7 @@ public class Genius {
         Lyrics lyrics = new Lyrics();
         lyrics.setArtist(song.getArtist());
         lyrics.setTitle(song.getTitle());
+        lyrics.setUrl(song.getUrl());
         lyrics.setStatus(true);
         lyrics.setLyrics(song.getPlainLyrics());
 
@@ -109,6 +110,7 @@ public class Genius {
                     Lyrics lyrics = new Lyrics();
                     lyrics.setArtist(song.getArtist());
                     lyrics.setTitle(song.getTitle());
+                    lyrics.setUrl(song.getUrl());
                     lyrics.setStatus(true);
                     lyrics.setLyrics(song.getPlainLyrics());
 

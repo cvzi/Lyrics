@@ -4,6 +4,7 @@ public class Lyrics {
     private String lyrics;
     private String title;
     private String artist;
+    private String url;
     private boolean status;
     private String errorMessage;
     private Genius.GeniusLookUpResult[] results;
@@ -24,6 +25,10 @@ public class Lyrics {
     public void setLyrics(String lyrics) {
         this.lyrics = lyrics;
     }
+
+    public String getUrl() { return url; }
+
+    public void setUrl(String url) { this.url = url; }
 
     public String getTitle() {
         return title;
