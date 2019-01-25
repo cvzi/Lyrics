@@ -1,10 +1,12 @@
 package sexy.lyrics;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.SystemClock;
 import androidx.core.content.ContextCompat;
@@ -21,10 +23,14 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+
 public class LyricsViewActivity extends AppCompatActivity {
     private Genius G;
     private String currentArtist = null;
     private String currentTitle = null;
+    private Lyrics currentLyrics = null;
     private float fontSize = 0;
     private MusicBroadcastReceiver mReceiver = new MusicBroadcastReceiver();
     private AudioManager mAudioManager = null;
@@ -73,6 +79,8 @@ public class LyricsViewActivity extends AppCompatActivity {
         registerReceiver(mReceiver, iF);
 
 
+        mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+
         fontSize = ((TextView) findViewById(R.id.result)).getTextSize();
 
         if (savedInstanceState != null) {
@@ -86,19 +94,29 @@ public class LyricsViewActivity extends AppCompatActivity {
             currentTitle = mReceiver.getTrack();
             currentArtist = mReceiver.getArtist();
             loadLyrics(currentArtist, currentTitle);
-        } else {
+        } else if(mAudioManager.isMusicActive()) {
             // Pause and immediately play music to trigger a broadcast of the current song
-            sendMediaButton(getApplicationContext(), KeyEvent.KEYCODE_MEDIA_PAUSE);
-            sendMediaButton(getApplicationContext(), KeyEvent.KEYCODE_MEDIA_PLAY);
+            sendMediaButton(KeyEvent.KEYCODE_MEDIA_PAUSE);
+            sendMediaButton(KeyEvent.KEYCODE_MEDIA_PLAY);
         }
+
+
+        final TextView textViewResult = findViewById(R.id.result);
+        textViewResult.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                if(!textViewResult.isTextSelectable()) {
+                    textViewResult.setTextIsSelectable(true);
+                }
+                return false;
+            }
+        });
+
 
     }
 
 
-    private void sendMediaButton(Context context, int keyCode) {
-        if(mAudioManager == null) {
-            mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-        }
+    private void sendMediaButton(int keyCode) {
         long eventTime = SystemClock.uptimeMillis();
 
         KeyEvent downEvent = new KeyEvent(eventTime, eventTime, KeyEvent.ACTION_DOWN, keyCode, 0);
@@ -144,6 +162,10 @@ public class LyricsViewActivity extends AppCompatActivity {
                 }
                 break;
 
+            case R.id.action_viewwebsite:
+                openGeniusCom(currentTitle, currentArtist);
+                break;
+
             case R.id.action_exit:
                 onPause();
                 unregisterReceiver(mReceiver);
@@ -169,6 +191,24 @@ public class LyricsViewActivity extends AppCompatActivity {
                 break;
         }
         return true;
+    }
+
+    public void openGeniusCom(String localArtist, String localTitle) {
+        String url = "https://genius.com/";
+
+        if(currentLyrics != null) {
+            url = currentLyrics.getUrl();
+        } else if(localArtist != null && localTitle != null) {
+            try {
+                url = "https://genius.com/search?q=" + URLEncoder.encode(localArtist + " " + localTitle, "utf-8");
+            } catch (UnsupportedEncodingException e) {
+            }
+        }
+
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        if (browserIntent.resolveActivity(getPackageManager()) != null) {
+            startActivity(browserIntent);
+        }
     }
 
     public void loadLyrics(String localArtist, String localTitle) {
@@ -197,7 +237,7 @@ public class LyricsViewActivity extends AppCompatActivity {
     }
 
     private void hideSongSelector() {
-        LinearLayout linearLayout = (LinearLayout) findViewById(R.id.songSelectorLayout);
+        LinearLayout linearLayout = findViewById(R.id.songSelectorLayout);
         linearLayout.removeAllViews();
     }
 
@@ -206,7 +246,7 @@ public class LyricsViewActivity extends AppCompatActivity {
 
         Genius.GeniusLookUpResult[] results = lyrics.getResults();
 
-        LinearLayout linearLayout = (LinearLayout) findViewById(R.id.songSelectorLayout);
+        LinearLayout linearLayout = findViewById(R.id.songSelectorLayout);
 
         getSupportActionBar().setTitle("");
         getSupportActionBar().setSubtitle(R.string.please_select_lyrics);
@@ -258,13 +298,13 @@ public class LyricsViewActivity extends AppCompatActivity {
             String artist = songData[0];
             String song = songData[1];
             if (songData.length < 4) {
-                boolean usecache = true;
+                boolean useCache = true;
                 if (songData.length > 2 && songData[2].equals("nocache")) {
-                    usecache = false;
+                    useCache = false;
                 }
 
                 Lyrics cached = null;
-                if (usecache) {
+                if (useCache) {
                     cached = G.fromCache(artist, song);
                 }
 
@@ -297,7 +337,7 @@ public class LyricsViewActivity extends AppCompatActivity {
         protected void onPostExecute(Lyrics result) {
             super.onPostExecute(result);
 
-            TextView textViewResult = (TextView) findViewById(R.id.result);
+            TextView textViewResult = findViewById(R.id.result);
             if (result.status()) {
                 textViewResult.setText(multiTrim(result.getLyrics()));
 
@@ -306,7 +346,10 @@ public class LyricsViewActivity extends AppCompatActivity {
 
                 // Scroll to top
                 findViewById(R.id.scrollView).scrollTo(0,0);
+
+                currentLyrics = result;
             } else {
+                currentLyrics = null;
                 if (result.getErrorMessage().equals("#multipleresults")) {
                     showSongSelector(result);
                 } else {

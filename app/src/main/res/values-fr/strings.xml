@@ -10,4 +10,5 @@
     <string name="please_select_lyrics">Choisis la chanson correcte:</string>
     <string name="action_makeFontSmaller">Réduire la taille du texte</string>
     <string name="action_makeFontBigger">Agrandir la taille du texte</string>
+    <string name="action_viewwebsite">Ouvir genius.com</string>
 </resources>

@@ -10,4 +10,5 @@
     <string name="please_select_lyrics">Velge riktig sang:</string>
     <string name="action_makeFontSmaller">Redusere skriftstørrelsen</string>
     <string name="action_makeFontBigger">Øke skriftstørrelsen</string>
+    <string name="action_viewwebsite">Åpne på genius.com</string>
 </resources>

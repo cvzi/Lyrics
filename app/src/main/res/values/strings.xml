@@ -3,6 +3,7 @@
     <string name="loading">Loading…</string>
     <string name="action_refresh">Reload page</string>
     <string name="action_forcereload">Reload from genius.com</string>
+    <string name="action_viewwebsite">View on genius.com</string>
     <string name="action_makeFontSmallerCondensed" translatable="false"> ➖ </string>
     <string name="action_makeFontBiggerCondensed" translatable="false"> ➕ </string>
     <string name="action_makeFontSmaller">Decrease font size</string>

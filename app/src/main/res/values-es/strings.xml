@@ -9,4 +9,5 @@
     <string name="please_select_lyrics">Por favor, elige la canción correcta:</string>
     <string name="action_makeFontBigger">Aumentar fuente</string>
     <string name="action_makeFontSmaller">Reducir fuente</string>
+    <string name="action_viewwebsite">Abrir en genius.com</string>
 </resources>

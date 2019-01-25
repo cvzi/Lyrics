@@ -27,6 +27,10 @@
         android:title="@string/action_forcereload"
         app:showAsAction="never"/>
 
+    <item android:id="@+id/action_viewwebsite"
+        android:title="@string/action_viewwebsite"
+        app:showAsAction="never"/>
+
     <item android:id="@+id/action_exit"
         android:title="@string/action_exit"
         app:showAsAction="never"/>

@@ -9,4 +9,5 @@
     <string name="please_select_lyrics">Bitte das korrekte Lied auswählen:</string>
     <string name="action_makeFontSmaller">Schrift kleiner</string>
     <string name="action_makeFontBigger">Schrift größer</string>
+    <string name="action_viewwebsite">Auf genius.com öffnen</string>
 </resources>
