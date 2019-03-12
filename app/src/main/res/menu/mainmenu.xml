@@ -7,32 +7,36 @@
         android:id="@+id/action_refresh"
         android:icon="@drawable/ic_refresh_white_24dp"
         android:title="@string/action_refresh"
-        app:showAsAction="ifRoom"/>
+        app:showAsAction="ifRoom" />
 
     <item
-        android:id="@+id/action_makeFontBigger"
-        android:title="@string/action_makeFontBigger"
-        android:titleCondensed="@string/action_makeFontBiggerCondensed"
-        app:showAsAction="ifRoom"/>
+        android:id="@+id/action_make_font_bigger"
+        android:contentDescription="@string/action_make_font_bigger"
+        android:title="@string/action_make_font_bigger"
+        android:titleCondensed="@string/action_make_font_bigger_condensed"
+        app:showAsAction="ifRoom" />
 
     <item
-        android:id="@+id/action_makeFontSmaller"
-        android:title="@string/action_makeFontSmaller"
-        android:titleCondensed="@string/action_makeFontSmallerCondensed"
-        app:showAsAction="ifRoom"/>
+        android:id="@+id/action_make_font_smaller"
+        android:contentDescription="@string/action_make_font_smaller"
+        android:title="@string/action_make_font_smaller"
+        android:titleCondensed="@string/action_make_font_smaller_condensed"
+        app:showAsAction="ifRoom" />
 
     <!-- Settings, should always be in the overflow -->
+    <item
+        android:id="@+id/action_search"
+        android:title="@string/action_search"
+        app:showAsAction="never" />
 
-    <item android:id="@+id/action_forcereload"
-        android:title="@string/action_forcereload"
-        app:showAsAction="never"/>
+    <item
+        android:id="@+id/action_force_reload"
+        android:title="@string/action_force_reload"
+        app:showAsAction="never" />
 
-    <item android:id="@+id/action_viewwebsite"
-        android:title="@string/action_viewwebsite"
-        app:showAsAction="never"/>
-
-    <item android:id="@+id/action_exit"
-        android:title="@string/action_exit"
-        app:showAsAction="never"/>
+    <item
+        android:id="@+id/action_view_website"
+        android:title="@string/action_view_website"
+        app:showAsAction="never" />
 
 </menu>

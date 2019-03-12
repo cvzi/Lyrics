@@ -2,14 +2,23 @@
     <string name="app_name">Lyrics</string>
     <string name="loading">Loading…</string>
     <string name="action_refresh">Reload page</string>
-    <string name="action_forcereload">Reload from genius.com</string>
-    <string name="action_viewwebsite">View on genius.com</string>
-    <string name="action_makeFontSmallerCondensed" translatable="false"> ➖ </string>
-    <string name="action_makeFontBiggerCondensed" translatable="false"> ➕ </string>
-    <string name="action_makeFontSmaller">Decrease font size</string>
-    <string name="action_makeFontBigger">Increase font size</string>
-    <string name="action_exit">Exit</string>
+    <string name="action_force_reload">Reload from genius.com</string>
+    <string name="action_search">Search/Wrong lyrics</string>
+    <string name="action_view_website">View on genius.com</string>
+    <string name="action_make_font_smaller_condensed" translatable="false"> ➖ </string>
+    <string name="action_make_font_bigger_condensed" translatable="false"> ➕ </string>
+    <string name="action_make_font_smaller">Decrease font size</string>
+    <string name="action_make_font_bigger">Increase font size</string>
     <string name="by_artist">by</string>
     <string name="sorry">Sorry!</string>
     <string name="please_select_lyrics">Please select the correct entry:</string>
+    <string name="search">Search</string>
+    <string name="search_go">Search</string>
+    <string name="artist_colon">Artist:</string>
+    <string name="title_colon">Title:</string>
+    <string name="search_more_results">Search with different title/artist:</string>
+    <string name="sorry_no_results">Sorry, no results.</string>
+    <string name="sorry_no_search_results">Sorry, no search results.</string>
+    <string name="artist_minus_title" translatable="false">%s - %s</string>
+    <string name="x_newline_y" translatable="false">%s\n%s</string>
 </resources>
