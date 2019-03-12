@@ -1,5 +1,6 @@
 package sexy.lyrics;
 
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class Lyrics {
     private String lyrics;
     private String title;
@@ -26,9 +27,13 @@ public class Lyrics {
         this.lyrics = lyrics;
     }
 
-    public String getUrl() { return url; }
+    public String getUrl() {
+        return url;
+    }
 
-    public void setUrl(String url) { this.url = url; }
+    public void setUrl(String url) {
+        this.url = url;
+    }
 
     public String getTitle() {
         return title;

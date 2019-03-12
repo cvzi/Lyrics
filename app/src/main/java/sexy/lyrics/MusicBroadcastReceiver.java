@@ -9,7 +9,6 @@ public class MusicBroadcastReceiver extends BroadcastReceiver {
     private LyricsViewActivity activity = null;
     private String artist = null;
     private String track = null;
-    private String album = null;
 
     public void setActivity(LyricsViewActivity activity) {
         this.activity = activity;
@@ -27,6 +26,7 @@ public class MusicBroadcastReceiver extends BroadcastReceiver {
         return track;
     }
 
+    @SuppressWarnings("SpellCheckingInspection")
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
@@ -35,19 +35,17 @@ public class MusicBroadcastReceiver extends BroadcastReceiver {
             if ("com.amazon.mp3.metachanged".equals(action)) {
                 artist = intent.getStringExtra("com.amazon.mp3.artist");
                 track = intent.getStringExtra("com.amazon.mp3.track");
-                album = intent.getStringExtra("com.amazon.mp3.album");
             } else {
                 artist = intent.getStringExtra("artist");
                 track = intent.getStringExtra("track");
-                album = intent.getStringExtra("album");
             }
         } catch (Throwable e) {
             return;
         }
-        if (last == null || !last.equals(artist + ":" + album + ":" + track)) {
-            last = artist + ":" + album + ":" + track;
+        if (last == null || !last.equals(artist + ":" + track)) {
+            last = artist + ":" + track;
 
-            if(activity != null) {
+            if (activity != null) {
                 activity.loadLyrics(artist, track);
             }
         }
