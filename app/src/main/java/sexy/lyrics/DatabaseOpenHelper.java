@@ -10,14 +10,30 @@ class DatabaseOpenHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "database.db";
     private static final int DATABASE_VERSION = 1;
 
+    static final String FIELD_TITLE = "title";
+    static final String FIELD_ARTIST = "artist";
+    static final String FIELD_GENIUS_ID = "geniusid";
+    static final String FIELD_TIMESTAMP = "timestamp";
+    static final String FIELD_JSON = "json";
+
     DatabaseOpenHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     @Override
     public void onCreate(SQLiteDatabase database) {
-        database.execSQL("CREATE TABLE " + TABLE_SONGS + " (geniusid INTEGER PRIMARY KEY NOT NULL, timestamp INTEGER, title TEXT, artist TEXT, json TEXT);");
-        database.execSQL("CREATE TABLE " + TABLE_LOCAL_TRACKS + " (title TEXT, artist TEXT, geniusid INTEGER);");
+        database.execSQL("CREATE TABLE "
+                + TABLE_SONGS + " ( "
+                + FIELD_GENIUS_ID + " INTEGER PRIMARY KEY NOT NULL, "
+                + FIELD_TIMESTAMP + " INTEGER, "
+                + FIELD_TITLE + " TEXT, "
+                + FIELD_ARTIST + " TEXT, "
+                + FIELD_JSON + " TEXT);");
+        database.execSQL("CREATE TABLE "
+                + TABLE_LOCAL_TRACKS + " ("
+                + FIELD_TITLE + " TEXT, "
+                + FIELD_ARTIST + " TEXT, "
+                + FIELD_GENIUS_ID + " INTEGER);");
     }
 
     @Override

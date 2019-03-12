@@ -28,6 +28,14 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
+import static sexy.lyrics.DatabaseOpenHelper.FIELD_ARTIST;
+import static sexy.lyrics.DatabaseOpenHelper.FIELD_GENIUS_ID;
+import static sexy.lyrics.DatabaseOpenHelper.FIELD_JSON;
+import static sexy.lyrics.DatabaseOpenHelper.FIELD_TIMESTAMP;
+import static sexy.lyrics.DatabaseOpenHelper.FIELD_TITLE;
+import static sexy.lyrics.DatabaseOpenHelper.TABLE_LOCAL_TRACKS;
+import static sexy.lyrics.DatabaseOpenHelper.TABLE_SONGS;
+
 class Genius {
     private static final int REQUEST_TIMEOUT = 20000; // 0 == block indefinitely
     private final SQLiteDatabase database;
@@ -53,11 +61,11 @@ class Genius {
             return null;
         }
 
-        String sql = "SELECT songs.json " +
-                "FROM localtracks, songs " +
-                "WHERE localtracks.geniusid = songs.geniusid " +
-                "AND localtracks.title LIKE " + DatabaseUtils.sqlEscapeString(localTitle) + " " +
-                "AND localtracks.artist LIKE " + DatabaseUtils.sqlEscapeString(localArtist) + " " +
+        String sql = "SELECT " + TABLE_SONGS + "." + FIELD_JSON + " " +
+                "FROM " + TABLE_LOCAL_TRACKS + ", " + TABLE_SONGS + " " +
+                "WHERE " + TABLE_LOCAL_TRACKS + "." + FIELD_GENIUS_ID + " = " + TABLE_SONGS + "." + FIELD_GENIUS_ID + " " +
+                "AND " + TABLE_LOCAL_TRACKS + "." + FIELD_TITLE + " LIKE " + DatabaseUtils.sqlEscapeString(localTitle) + " " +
+                "AND " + TABLE_LOCAL_TRACKS + "." + FIELD_ARTIST + " LIKE " + DatabaseUtils.sqlEscapeString(localArtist) + " " +
                 "LIMIT 1";
         Cursor cursor = database.rawQuery(sql, null);
         cursor.moveToFirst();
@@ -91,7 +99,7 @@ class Genius {
         if (localArtist == null || localTitle == null || localArtist.length() == 0 || localTitle.length() == 0) {
             return;
         }
-        database.delete(DatabaseOpenHelper.TABLE_LOCAL_TRACKS, DatabaseOpenHelper.TABLE_LOCAL_TRACKS + ".title LIKE ? AND " + DatabaseOpenHelper.TABLE_LOCAL_TRACKS + ".artist LIKE ?", new String[]{localTitle, localArtist});
+        database.delete(TABLE_LOCAL_TRACKS, TABLE_LOCAL_TRACKS + "." + FIELD_TITLE + " LIKE ? AND " + TABLE_LOCAL_TRACKS + "." + FIELD_ARTIST + " LIKE ?", new String[]{localTitle, localArtist});
     }
 
     Lyrics fromWeb(GeniusLookUpResult geniusLookUpResult, String localArtist, String localTitle) {
@@ -160,7 +168,7 @@ class Genius {
             Log.e("lookUp()", "JSONException", e);
             return null;
         }
-        String query = jsonObject.toString();  // = "{\"queries\":[{\"key\":{},\"title\":\"" + song + "\",\"artist\":\"" + artist + "\"}]}";
+        String query = jsonObject.toString();  //  {"queries":[{"key":{},"title":"QUERY_TITLE","artist":"QUERY_ARTIST"}]}
         try {
             URL url = new URL("https://api.genius.com/songs/lookup");
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -310,22 +318,23 @@ class Genius {
         String timestamp = tsLong.toString();
 
         ContentValues values = new ContentValues();
-        values.put("geniusid", song.getId());
-        values.put("timestamp", timestamp);
-        values.put("title", song.getTitle());
-        values.put("artist", song.getArtist());
-        values.put("json", jsonData);
+        values.put(FIELD_GENIUS_ID, song.getId());
+        values.put(FIELD_TIMESTAMP, timestamp);
+        values.put(FIELD_TITLE, song.getTitle());
+        values.put(FIELD_ARTIST, song.getArtist());
+        values.put(FIELD_JSON, jsonData);
 
-        database.insertWithOnConflict(DatabaseOpenHelper.TABLE_SONGS, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+        database.insertWithOnConflict(TABLE_SONGS, null, values, SQLiteDatabase.CONFLICT_REPLACE);
 
         values = new ContentValues();
-        values.put("title", localTitle);
-        values.put("artist", localArtist);
-        values.put("geniusid", song.getId());
+        values.put(FIELD_TITLE, localTitle);
+        values.put(FIELD_ARTIST, localArtist);
+        values.put(FIELD_GENIUS_ID, song.getId());
 
-        database.delete(DatabaseOpenHelper.TABLE_LOCAL_TRACKS, "title=? AND artist=?", new String[]{localTitle, localArtist}); // This is important if there were multiple results, and the user reloaded to choose another result
+        // This is important if there were multiple results, and the user reloaded to choose another result
+        database.delete(TABLE_LOCAL_TRACKS, FIELD_TITLE + "=? AND " + FIELD_ARTIST + "=?", new String[]{localTitle, localArtist});
 
-        database.insert(DatabaseOpenHelper.TABLE_LOCAL_TRACKS, null, values);
+        database.insert(TABLE_LOCAL_TRACKS, null, values);
     }
 
     @SuppressWarnings("unused")
