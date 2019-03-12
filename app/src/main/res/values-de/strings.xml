@@ -2,12 +2,19 @@
     <string name="app_name">Lyrics</string>
     <string name="loading">Laden…</string>
     <string name="action_refresh">Aktualisieren</string>
-    <string name="action_forcereload">Neuladen von genius.com</string>
-    <string name="action_exit">Beenden</string>
+    <string name="action_force_reload">Neuladen von genius.com</string>
     <string name="by_artist">von</string>
     <string name="sorry">Sorry!</string>
     <string name="please_select_lyrics">Bitte das korrekte Lied auswählen:</string>
-    <string name="action_makeFontSmaller">Schrift kleiner</string>
-    <string name="action_makeFontBigger">Schrift größer</string>
-    <string name="action_viewwebsite">Auf genius.com öffnen</string>
+    <string name="action_make_font_smaller">Schrift kleiner</string>
+    <string name="action_make_font_bigger">Schrift größer</string>
+    <string name="action_view_website">Auf genius.com öffnen</string>
+    <string name="search">Suche</string>
+    <string name="artist_colon">Künstler:</string>
+    <string name="title_colon">Titel:</string>
+    <string name="search_more_results">Suche mit anderem Titel/Künstler:</string>
+    <string name="sorry_no_results">Sorry, keine Ergebnisse.</string>
+    <string name="sorry_no_search_results">Sorry, keine Suchergebnisse.</string>
+    <string name="action_search">Suche/Falscher Text</string>
+    <string name="search_go">Suchen</string>
 </resources>
