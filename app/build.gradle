@@ -1,8 +1,23 @@
 apply plugin: 'com.android.application'
 
 android {
+    signingConfigs {
+        release {
+            if (project.properties['keyStore.release.storeFile'] != null) {
+                storeFile file(project.properties['keyStore.release.storeFile'])
+                storePassword project.properties['keyStore.release.storePassword']
+                keyAlias project.properties['keyStore.release.keyAlias']
+                keyPassword project.properties['keyStore.release.keyPassword']
+            } else {
+                storeFile rootProject.file('mykey.jks')
+                storePassword 'password'
+                keyAlias 'key0'
+                keyPassword 'password'
+            }
+        }
+    }
     compileSdkVersion 28
-
+    buildToolsVersion '28.0.3'
     defaultConfig {
         applicationId "sexy.lyrics"
         minSdkVersion 19
@@ -12,6 +27,7 @@ android {
     }
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             debuggable false
