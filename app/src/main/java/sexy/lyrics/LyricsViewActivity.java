@@ -40,18 +40,18 @@ public class LyricsViewActivity extends AppCompatActivity {
     private static final String FROM_MENU = "#frommenu";
     private static final String FROM_SELECTOR = "#fromselector";
     private static final String OFFLINE = "#offline";
-    private final MusicBroadcastReceiver mReceiver = new MusicBroadcastReceiver();
+    private final MusicBroadcastReceiver musicBroadcastReceiver = new MusicBroadcastReceiver();
     private final LyricsViewActivity activity = this;
-    private Genius G;
+    private Genius genius;
     private String currentArtist = null;
     private String currentTitle = null;
     private Lyrics currentLyrics = null;
     private float fontSize = 0;
-    private AudioManager mAudioManager = null;
+    private AudioManager audioManager = null;
 
     @SuppressWarnings("StringConcatenationInLoop")
-    static private String multiTrim(String s) {
-        String lines[] = s.split("\\r?\\n");
+    private static String multiTrim(String str) {
+        String[] lines = str.split("\\r?\\n");
         String re = "";
         for (String line : lines) {
             re += line.trim() + "\n";
@@ -67,8 +67,8 @@ public class LyricsViewActivity extends AppCompatActivity {
         final TextView textViewResult = findViewById(R.id.result);
 
         try {
-            G = new Genius(this);
-        } catch (Throwable e) {
+            genius = new Genius(this);
+        } catch (Exception e) {
             setActionBarSubtitle("No API Key");
             Log.e("Lyrics onCreate", "Could not find API Key");
             return;
@@ -99,19 +99,19 @@ public class LyricsViewActivity extends AppCompatActivity {
                 "queuechanged"
         };
 
-        IntentFilter iF = new IntentFilter();
+        IntentFilter intentFilter = new IntentFilter();
 
         for (String app : musicApps) {
             for (String action : musicActions) {
-                iF.addAction(app + "." + action);
+                intentFilter.addAction(app + "." + action);
             }
         }
 
-        mReceiver.setActivity(this);
-        registerReceiver(mReceiver, iF);
+        musicBroadcastReceiver.setActivity(this);
+        registerReceiver(musicBroadcastReceiver, intentFilter);
 
 
-        mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
         fontSize = textViewResult.getTextSize();
 
@@ -122,11 +122,11 @@ public class LyricsViewActivity extends AppCompatActivity {
 
         if (currentArtist != null && currentTitle != null) {
             loadLyrics(currentArtist, currentTitle);
-        } else if (mReceiver.hasSong()) {
-            currentTitle = mReceiver.getTrack();
-            currentArtist = mReceiver.getArtist();
+        } else if (musicBroadcastReceiver.hasSong()) {
+            currentTitle = musicBroadcastReceiver.getTrack();
+            currentArtist = musicBroadcastReceiver.getArtist();
             loadLyrics(currentArtist, currentTitle);
-        } else if (mAudioManager.isMusicActive()) {
+        } else if (audioManager.isMusicActive()) {
             // Pause and immediately play music to trigger a broadcast of the current song
             sendMediaButton(KeyEvent.KEYCODE_MEDIA_PAUSE);
             sendMediaButton(KeyEvent.KEYCODE_MEDIA_PLAY);
@@ -135,7 +135,7 @@ public class LyricsViewActivity extends AppCompatActivity {
 
         textViewResult.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
-            public boolean onLongClick(View v) {
+            public boolean onLongClick(View view) {
                 if (!textViewResult.isTextSelectable()) {
                     textViewResult.setTextIsSelectable(true);
                 }
@@ -155,11 +155,7 @@ public class LyricsViewActivity extends AppCompatActivity {
                 KeyEvent.ACTION_DOWN,
                 keyCode,
                 0);
-        mAudioManager.dispatchMediaKeyEvent(downEvent);
-
-        // Not necessary ?
-        // KeyEvent upEvent = new KeyEvent(eventTime, eventTime, KeyEvent.ACTION_UP, keyCode, 0);
-        // mAudioManager.dispatchMediaKeyEvent(upEvent);
+        audioManager.dispatchMediaKeyEvent(downEvent);
     }
 
     @Override
@@ -172,8 +168,8 @@ public class LyricsViewActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        G.close();
-        unregisterReceiver(mReceiver);
+        genius.close();
+        unregisterReceiver(musicBroadcastReceiver);
     }
 
     @Override
@@ -284,21 +280,23 @@ public class LyricsViewActivity extends AppCompatActivity {
         hideSearchButton();
         hideSongSelector();
 
-        Genius.GeniusLookUpResult[] results = lyrics.getResults();
-
         LinearLayout linearLayout = findViewById(R.id.songSelectorLayout);
 
         setActionBarTitle("");
         setActionBarSubtitle(R.string.please_select_lyrics);
         ((TextView) findViewById(R.id.result)).setText("");
 
+        final Genius.GeniusLookUpResult[] results = lyrics.getResults();
         for (final Genius.GeniusLookUpResult result : results) {
-            Button v = new Button(this);
-            v.setText(getString(R.string.artist_minus_title, result.getArtist(), result.getTitle()));
-            v.setTextSize(22);
-            v.setTextColor(ContextCompat.getColor(this, R.color.colorLinksText));
-            v.setOnClickListener(new OnSelectSong(result, lyrics.getArtist(), lyrics.getTitle()));
-            linearLayout.addView(v);
+            Button resultButton = new Button(this);
+            resultButton.setText(getString(R.string.artist_minus_title, result.getArtist(), result.getTitle()));
+            resultButton.setTextSize(22);
+            resultButton.setTextColor(ContextCompat.getColor(
+                    this,
+                    R.color.colorLinksText));
+            resultButton.setOnClickListener(
+                    new OnSelectSong(result, lyrics.getArtist(), lyrics.getTitle()));
+            linearLayout.addView(resultButton);
         }
 
         Button searchButton = new Button(this);
@@ -306,7 +304,7 @@ public class LyricsViewActivity extends AppCompatActivity {
         searchButton.setTextSize(22);
         searchButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
+            public void onClick(View view) {
                 showSearchButton(FROM_SELECTOR);
             }
         });
@@ -347,7 +345,9 @@ public class LyricsViewActivity extends AppCompatActivity {
         }
 
         textView = new TextView(this);
-        textView.setText(getString(R.string.x_newline_y, getString(R.string.search_more_results), getString(R.string.artist_colon)));
+        textView.setText(getString(R.string.x_newline_y,
+                getString(R.string.search_more_results),
+                getString(R.string.artist_colon)));
         linearLayout.addView(textView);
 
         final EditText editTextArtist = new EditText(this);
@@ -367,14 +367,14 @@ public class LyricsViewActivity extends AppCompatActivity {
         button.setTextSize(22);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
+            public void onClick(View view) {
                 hideSearchButton();
 
                 String searchArtist = editTextArtist.getText().toString();
                 String searchTitle = editTextTitle.getText().toString();
 
                 // Removed cached entry:
-                G.deleteFromCache(searchArtist, searchTitle);
+                genius.deleteFromCache(searchArtist, searchTitle);
 
                 setActionBarTitle(R.string.search);
                 setActionBarSubtitle(searchArtist + " - " + searchTitle);
@@ -398,8 +398,9 @@ public class LyricsViewActivity extends AppCompatActivity {
     }
 
     private boolean online() {
-        ConnectivityManager c = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = c.getActiveNetworkInfo();
+        ConnectivityManager connectivityManager = (ConnectivityManager)
+                getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
         return networkInfo != null && networkInfo.isConnected();
     }
 
@@ -473,50 +474,50 @@ public class LyricsViewActivity extends AppCompatActivity {
 
                 Lyrics cached = null;
                 if (useCache) {
-                    cached = activity.G.fromCache(artist, song);
+                    cached = activity.genius.fromCache(artist, song);
                 }
 
                 if (cached != null && cached.status()) {
                     return cached;
                 } else if (activity.online()) {
-                    Genius.GeniusLookUpResult[] results = activity.G.lookUp(artist, song);
+                    Genius.GeniusLookUpResult[] results = activity.genius.lookUp(artist, song);
 
-                    if (results == null || results.length == 0) {
+                    if (results.length == 0) {
                         return new Lyrics(NO_RESULTS);
                     } else if (results.length == 1) {
-                        return activity.G.fromWeb(results[0], artist, song);
+                        return activity.genius.fromWeb(results[0], artist, song);
                     } else {
-                        Lyrics l = new Lyrics(MULTIPLE_RESULTS);
-                        l.setArtist(artist);
-                        l.setTitle(song);
-                        l.setResults(results);
-                        return l;
+                        Lyrics multipleLyrics = new Lyrics(MULTIPLE_RESULTS);
+                        multipleLyrics.setArtist(artist);
+                        multipleLyrics.setTitle(song);
+                        multipleLyrics.setResults(results);
+                        return multipleLyrics;
                     }
                 } else {
                     return new Lyrics(OFFLINE);
                 }
             } else if (songData[3].equals(BY_ID)) {
                 // Direct download by id
-                return activity.G.fromWeb(songData[2], artist, song);
+                return activity.genius.fromWeb(songData[2], artist, song);
             } else {
                 // Search
                 String searchArtist = songData[0];
                 String searchTitle = songData[1];
                 String localArtist = songData[2];
                 String localSong = songData[3];
-                Genius.GeniusLookUpResult[] results = activity.G.lookUp(searchArtist, searchTitle);
+                Genius.GeniusLookUpResult[] results = activity.genius.lookUp(searchArtist, searchTitle);
 
-                if (results == null || results.length == 0) {
-                    Lyrics l = new Lyrics(NO_RESULTS_AFTER_SEARCH);
-                    l.setArtist(searchArtist);
-                    l.setTitle(searchTitle);
-                    return l;
+                if (results.length == 0) {
+                    Lyrics noResultsLyrics = new Lyrics(NO_RESULTS_AFTER_SEARCH);
+                    noResultsLyrics.setArtist(searchArtist);
+                    noResultsLyrics.setTitle(searchTitle);
+                    return noResultsLyrics;
                 } else {
-                    Lyrics l = new Lyrics(MULTIPLE_RESULTS);
-                    l.setArtist(localArtist);
-                    l.setTitle(localSong);
-                    l.setResults(results);
-                    return l;
+                    Lyrics multipleResultsLyrics = new Lyrics(MULTIPLE_RESULTS);
+                    multipleResultsLyrics.setArtist(localArtist);
+                    multipleResultsLyrics.setTitle(localSong);
+                    multipleResultsLyrics.setResults(results);
+                    return multipleResultsLyrics;
                 }
             }
         }
@@ -578,7 +579,7 @@ public class LyricsViewActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onClick(View v) {
+        public void onClick(View view) {
 
             hideSongSelector();
 

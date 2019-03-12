@@ -24,6 +24,7 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -42,7 +43,7 @@ class Genius {
     private final DatabaseOpenHelper dbHelper;
     private final String clientAccessToken;
 
-    Genius(Context context) throws Throwable {
+    Genius(Context context) throws Exception {
         dbHelper = new DatabaseOpenHelper(context);
         database = dbHelper.getWritableDatabase();
 
@@ -66,15 +67,15 @@ class Genius {
             return null;
         }
 
-        String sql = "SELECT " + TABLE_SONGS + "." + FIELD_JSON + " " +
-                "FROM " + TABLE_LOCAL_TRACKS + ", " + TABLE_SONGS + " " +
-                "WHERE " + TABLE_LOCAL_TRACKS + "." + FIELD_GENIUS_ID
-                + " = " + TABLE_SONGS + "." + FIELD_GENIUS_ID + " " +
-                "AND " + TABLE_LOCAL_TRACKS + "." + FIELD_TITLE
-                + " LIKE " + DatabaseUtils.sqlEscapeString(localTitle) + " " +
-                "AND " + TABLE_LOCAL_TRACKS + "." + FIELD_ARTIST
-                + " LIKE " + DatabaseUtils.sqlEscapeString(localArtist) + " " +
-                "LIMIT 1";
+        String sql = "SELECT " + TABLE_SONGS + "." + FIELD_JSON + " "
+                + "FROM " + TABLE_LOCAL_TRACKS + ", " + TABLE_SONGS + " "
+                + "WHERE " + TABLE_LOCAL_TRACKS + "." + FIELD_GENIUS_ID
+                + " = " + TABLE_SONGS + "." + FIELD_GENIUS_ID + " "
+                + "AND " + TABLE_LOCAL_TRACKS + "." + FIELD_TITLE
+                + " LIKE " + DatabaseUtils.sqlEscapeString(localTitle) + " "
+                + "AND " + TABLE_LOCAL_TRACKS + "." + FIELD_ARTIST
+                + " LIKE " + DatabaseUtils.sqlEscapeString(localArtist) + " "
+                + "LIMIT 1";
         Cursor cursor = database.rawQuery(sql, null);
         cursor.moveToFirst();
 
@@ -121,17 +122,23 @@ class Genius {
     }
 
     Lyrics fromWeb(String geniusId, String localArtist, String localTitle) {
-
+        final String TAG = "fromWeb()";
+        URL url;
         try {
-            URL url = new URL(
+            url = new URL(
                     "https://api.genius.com/songs/" + geniusId + "?text_format=plain");
+        } catch (MalformedURLException e) {
+            Log.e("fromWeb", "Redirect???"); // TODO
+            return null;
+        }
+        try {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             connection.setReadTimeout(REQUEST_TIMEOUT);
             connection.setRequestProperty("Authorization", "Bearer " + clientToken());
 
             if (!url.getHost().equals(connection.getURL().getHost())) {
-                Log.e("fromWeb", "Redirect???"); // TODO
+                Log.e(TAG, "Redirect???"); // TODO
                 return null;
             }
 
@@ -161,16 +168,14 @@ class Genius {
             } finally {
                 connection.disconnect();
             }
-
-
-        } catch (Exception e) {
-            Log.e("Genius", e.toString());
+        } catch (IOException e) {
+            Log.e(TAG, e.toString());
         }
-
         return null;
     }
 
     GeniusLookUpResult[] lookUp(String artist, String song) {
+        final String TAG = "lookUp()";
         JSONObject jsonObject;
         try {
             JSONObject queries = new JSONObject();
@@ -180,8 +185,8 @@ class Genius {
             jsonObject = new JSONObject();
             jsonObject.put("queries", queries);
         } catch (JSONException e) {
-            Log.e("lookUp()", "JSONException", e);
-            return null;
+            Log.e(TAG, "JSONException", e);
+            return new GeniusLookUpResult[0];
         }
         String query = jsonObject.toString();
         //  {"queries":[{"key":{},"title":"QUERY_TITLE","artist":"QUERY_ARTIST"}]}
@@ -201,8 +206,8 @@ class Genius {
             writer.close();
 
             if (!url.getHost().equals(connection.getURL().getHost())) {
-                Log.e("lookUp()", "Redirect???"); // TODO
-                return null;
+                Log.e(TAG, "Redirect???"); // TODO
+                return new GeniusLookUpResult[0];
             }
 
             try {
@@ -215,7 +220,7 @@ class Genius {
                     return parseGeniusLookup(json);
 
                 } else {
-                    return null;
+                    return new GeniusLookUpResult[0];
                 }
             } finally {
                 connection.disconnect();
@@ -223,10 +228,10 @@ class Genius {
 
 
         } catch (Exception e) {
-            Log.e("lookUp()", e.toString());
+            Log.e(TAG, e.toString());
         }
 
-        return null;
+        return new GeniusLookUpResult[0];
     }
 
 
@@ -250,7 +255,7 @@ class Genius {
         try {
             JSONArray hits = response.getJSONArray("hits");
             if (hits.length() == 0) {
-                return null;
+                return new GeniusLookUpResult[0];
             }
             ArrayList<GeniusLookUpResult> results = new ArrayList<>();
 
@@ -274,7 +279,7 @@ class Genius {
             return results.toArray(new GeniusLookUpResult[0]);
         } catch (JSONException e) {
             Log.e("parseGeniusLookup", e.toString());
-            return null;
+            return new GeniusLookUpResult[0];
         }
     }
 

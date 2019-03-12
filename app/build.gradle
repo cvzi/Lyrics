@@ -28,6 +28,9 @@ android {
             renderscriptDebuggable false
             zipAlignEnabled true
         }
+        debug {
+            debuggable true
+        }
     }
 }
 
