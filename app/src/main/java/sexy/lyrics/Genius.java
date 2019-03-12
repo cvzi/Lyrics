@@ -25,15 +25,16 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
-public class Genius {
-    private static int REQUESTTIMEOUT = 20000; // 0 == block indefinitely
-    private SQLiteDatabase database;
-    private DatabaseOpenHelper dbHelper;
-    private String clientAccessToken;
+class Genius {
+    private static final int REQUEST_TIMEOUT = 20000; // 0 == block indefinitely
+    private final SQLiteDatabase database;
+    private final DatabaseOpenHelper dbHelper;
+    private final String clientAccessToken;
 
-    public Genius(Context context) throws Throwable {
+    Genius(Context context) throws Throwable {
         dbHelper = new DatabaseOpenHelper(context);
         database = dbHelper.getWritableDatabase();
 
@@ -42,12 +43,12 @@ public class Genius {
         clientAccessToken = bundle.getString(".geniusClientAccessToken");
     }
 
-    public void close() {
+    void close() {
         database.close();
         dbHelper.close();
     }
 
-    public Lyrics fromCache(String localArtist, String localTitle) {
+    Lyrics fromCache(String localArtist, String localTitle) {
         if (localArtist == null || localTitle == null || localArtist.length() == 0 || localTitle.length() == 0) {
             return null;
         }
@@ -66,9 +67,14 @@ public class Genius {
         }
 
 
-
         JSONObject json = parseGeniusJson(cursor.getString(0));
+        if (json == null) {
+            return null;
+        }
         GeniusSong song = parseGeniusSong(json);
+        if (song == null) {
+            return null;
+        }
         cursor.close();
 
         Lyrics lyrics = new Lyrics();
@@ -80,20 +86,29 @@ public class Genius {
 
         return lyrics;
     }
-    public Lyrics fromWeb(GeniusLookUpResult geniusLookUpResult, String localArtist, String localTitle) {
+
+    void deleteFromCache(String localArtist, String localTitle) {
+        if (localArtist == null || localTitle == null || localArtist.length() == 0 || localTitle.length() == 0) {
+            return;
+        }
+        database.delete(DatabaseOpenHelper.TABLE_LOCAL_TRACKS, DatabaseOpenHelper.TABLE_LOCAL_TRACKS + ".title LIKE ? AND " + DatabaseOpenHelper.TABLE_LOCAL_TRACKS + ".artist LIKE ?", new String[]{localTitle, localArtist});
+    }
+
+    Lyrics fromWeb(GeniusLookUpResult geniusLookUpResult, String localArtist, String localTitle) {
         return fromWeb("" + geniusLookUpResult.getId(), localArtist, localTitle);
     }
-    public Lyrics fromWeb(String geniusid, String localArtist, String localTitle) {
+
+    Lyrics fromWeb(String geniusId, String localArtist, String localTitle) {
 
         try {
-            URL url = new URL("https://api.genius.com/songs/" + geniusid + "?text_format=plain");
+            URL url = new URL("https://api.genius.com/songs/" + geniusId + "?text_format=plain");
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
-            connection.setReadTimeout(REQUESTTIMEOUT);
+            connection.setReadTimeout(REQUEST_TIMEOUT);
             connection.setRequestProperty("Authorization", "Bearer " + clientToken());
 
             if (!url.getHost().equals(connection.getURL().getHost())) {
-                Log.e("Genius", "Redirect???"); // TODO
+                Log.e("fromWeb", "Redirect???"); // TODO
                 return null;
             }
 
@@ -103,21 +118,23 @@ public class Genius {
                 String result = readStream(in);
 
                 JSONObject json = parseGeniusJson(result);
-                if (json != null) {
-                    GeniusSong song = parseGeniusSong(json);
-                    writeToCache(song, result, localArtist, localTitle);
-
-                    Lyrics lyrics = new Lyrics();
-                    lyrics.setArtist(song.getArtist());
-                    lyrics.setTitle(song.getTitle());
-                    lyrics.setUrl(song.getUrl());
-                    lyrics.setStatus(true);
-                    lyrics.setLyrics(song.getPlainLyrics());
-
-                    return lyrics;
-                } else {
+                if (json == null) {
                     return null;
                 }
+                GeniusSong song = parseGeniusSong(json);
+                if (song == null) {
+                    return null;
+                }
+                writeToCache(song, result, localArtist, localTitle);
+
+                Lyrics lyrics = new Lyrics();
+                lyrics.setArtist(song.getArtist());
+                lyrics.setTitle(song.getTitle());
+                lyrics.setUrl(song.getUrl());
+                lyrics.setStatus(true);
+                lyrics.setLyrics(song.getPlainLyrics());
+
+                return lyrics;
             } finally {
                 connection.disconnect();
             }
@@ -130,16 +147,27 @@ public class Genius {
         return null;
     }
 
-    public GeniusLookUpResult[] lookUp(String artist, String song) {
-        String query = "{\"queries\":[{\"key\":{},\"title\":\"" + song + "\",\"artist\":\"" + artist + "\"}]}";
-
+    GeniusLookUpResult[] lookUp(String artist, String song) {
+        JSONObject jsonObject;
+        try {
+            JSONObject queries = new JSONObject();
+            queries.put("key", new JSONArray());
+            queries.put("title", song);
+            queries.put("artist", artist);
+            jsonObject = new JSONObject();
+            jsonObject.put("queries", queries);
+        } catch (JSONException e) {
+            Log.e("lookUp()", "JSONException", e);
+            return null;
+        }
+        String query = jsonObject.toString();  // = "{\"queries\":[{\"key\":{},\"title\":\"" + song + "\",\"artist\":\"" + artist + "\"}]}";
         try {
             URL url = new URL("https://api.genius.com/songs/lookup");
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
             connection.setDoOutput(true);
             connection.setRequestMethod("POST");
-            connection.setReadTimeout(REQUESTTIMEOUT);
+            connection.setReadTimeout(REQUEST_TIMEOUT);
             connection.setRequestProperty("Authorization", "Bearer " + clientToken());
             connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
 
@@ -149,7 +177,7 @@ public class Genius {
             writer.close();
 
             if (!url.getHost().equals(connection.getURL().getHost())) {
-                Log.e("Genius", "Redirect???"); // TODO
+                Log.e("lookUp()", "Redirect???"); // TODO
                 return null;
             }
 
@@ -171,24 +199,24 @@ public class Genius {
 
 
         } catch (Exception e) {
-            Log.e("Genius", e.toString());
+            Log.e("lookUp()", e.toString());
         }
 
         return null;
     }
 
 
-    private JSONObject parseGeniusJson(String jsonstring) {
+    private JSONObject parseGeniusJson(String jsonString) {
         try {
-            JSONObject root = new JSONObject(jsonstring);
+            JSONObject root = new JSONObject(jsonString);
 
             if (root.getJSONObject("meta").getInt("status") != 200) {
-                Log.e("Genius", "parseGeniusJson: status = " + root.getJSONObject("meta").getInt("status"));
+                Log.e("parseGeniusJson", "parseGeniusJson: status = " + root.getJSONObject("meta").getInt("status"));
                 return null;
             }
             return root.getJSONObject("response");
         } catch (JSONException e) {
-            Log.e("Genius", e.toString());
+            Log.e("parseGeniusJson", e.toString());
             return null;
         }
     }
@@ -199,7 +227,7 @@ public class Genius {
             if (hits.length() == 0) {
                 return null;
             }
-            ArrayList<GeniusLookUpResult> results = new ArrayList<GeniusLookUpResult>();
+            ArrayList<GeniusLookUpResult> results = new ArrayList<>();
 
             for (int i = 0; i < hits.length(); i++) {
                 try {
@@ -218,9 +246,9 @@ public class Genius {
                     Log.e("Genius Hits", e.toString());
                 }
             }
-            return results.toArray(new GeniusLookUpResult[results.size()]);
+            return results.toArray(new GeniusLookUpResult[0]);
         } catch (JSONException e) {
-            Log.e("Genius", e.toString());
+            Log.e("parseGeniusLookup", e.toString());
             return null;
         }
     }
@@ -240,7 +268,7 @@ public class Genius {
 
             return result;
         } catch (JSONException e) {
-            Log.e("Genius", e.toString());
+            Log.e("parseGeniusSong", e.toString());
             return null;
         }
     }
@@ -258,7 +286,7 @@ public class Genius {
                 char[] buffer = new char[1024];
                 try {
                     Reader reader = new BufferedReader(
-                            new InputStreamReader(is, "UTF-8"));
+                            new InputStreamReader(is, StandardCharsets.UTF_8));
                     int n;
                     while ((n = reader.read(buffer)) != -1) {
                         writer.write(buffer, 0, n);
@@ -276,7 +304,8 @@ public class Genius {
     }
 
 
-    private void writeToCache(GeniusSong song, String jsondata, String localArtist, String localTitle) {
+    @SuppressWarnings("SpellCheckingInspection")
+    private void writeToCache(GeniusSong song, String jsonData, String localArtist, String localTitle) {
         Long tsLong = System.currentTimeMillis() / 1000;
         String timestamp = tsLong.toString();
 
@@ -285,21 +314,21 @@ public class Genius {
         values.put("timestamp", timestamp);
         values.put("title", song.getTitle());
         values.put("artist", song.getArtist());
-        values.put("json", jsondata);
+        values.put("json", jsonData);
 
-        database.insertWithOnConflict(dbHelper.TABLE_SONGS, null, values, database.CONFLICT_REPLACE);
+        database.insertWithOnConflict(DatabaseOpenHelper.TABLE_SONGS, null, values, SQLiteDatabase.CONFLICT_REPLACE);
 
         values = new ContentValues();
         values.put("title", localTitle);
         values.put("artist", localArtist);
         values.put("geniusid", song.getId());
 
-        database.delete(dbHelper.TABLE_LOCALTRACKS, "title=? AND artist=?",new String[] {localTitle, localArtist}); // This is important if there were multiple results, and the user reloaded to choose another result
+        database.delete(DatabaseOpenHelper.TABLE_LOCAL_TRACKS, "title=? AND artist=?", new String[]{localTitle, localArtist}); // This is important if there were multiple results, and the user reloaded to choose another result
 
-        database.insert(dbHelper.TABLE_LOCALTRACKS, null, values);
+        database.insert(DatabaseOpenHelper.TABLE_LOCAL_TRACKS, null, values);
     }
 
-
+    @SuppressWarnings("unused")
     public class GeniusLookUpResult {
         private int id;
         private String url;
@@ -307,35 +336,35 @@ public class Genius {
         private String title;
         private String thumbnail;
 
-        public int getId() {
+        int getId() {
             return id;
         }
 
-        public void setId(int id) {
+        void setId(int id) {
             this.id = id;
         }
 
-        public String getUrl() {
+        String getUrl() {
             return url;
         }
 
-        public void setUrl(String url) {
+        void setUrl(String url) {
             this.url = url;
         }
 
-        public String getArtist() {
+        String getArtist() {
             return artist;
         }
 
-        public void setArtist(String artist) {
+        void setArtist(String artist) {
             this.artist = artist;
         }
 
-        public String getTitle() {
+        String getTitle() {
             return title;
         }
 
-        public void setTitle(String title) {
+        void setTitle(String title) {
             this.title = title;
         }
 
@@ -343,13 +372,14 @@ public class Genius {
             return thumbnail;
         }
 
-        public void setThumbnail(String thumbnail) {
+        void setThumbnail(String thumbnail) {
             this.thumbnail = thumbnail;
         }
     }
 
 
-    public class GeniusSong extends GeniusLookUpResult {
+    @SuppressWarnings("unused")
+    class GeniusSong extends GeniusLookUpResult {
 
         private int timestamp;
         private String lyrics_plain;
@@ -362,11 +392,11 @@ public class Genius {
             this.timestamp = timestamp;
         }
 
-        public String getPlainLyrics() {
+        String getPlainLyrics() {
             return lyrics_plain;
         }
 
-        public void setPlainLyrics(String lyrics_plain) {
+        void setPlainLyrics(String lyrics_plain) {
             this.lyrics_plain = lyrics_plain;
         }
     }
