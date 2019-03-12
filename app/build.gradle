@@ -3,17 +3,10 @@ apply plugin: 'com.android.application'
 android {
     signingConfigs {
         release {
-            if (project.properties['keyStore.release.storeFile'] != null) {
-                storeFile file(project.properties['keyStore.release.storeFile'])
-                storePassword project.properties['keyStore.release.storePassword']
-                keyAlias project.properties['keyStore.release.keyAlias']
-                keyPassword project.properties['keyStore.release.keyPassword']
-            } else {
-                storeFile rootProject.file('mykey.jks')
-                storePassword 'password'
-                keyAlias 'key0'
-                keyPassword 'password'
-            }
+            storeFile rootProject.file('mykey.jks')
+            storePassword 'password'
+            keyAlias 'key0'
+            keyPassword 'password'
         }
     }
     compileSdkVersion 28
