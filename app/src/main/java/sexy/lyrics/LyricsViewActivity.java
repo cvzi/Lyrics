@@ -92,7 +92,11 @@ public class LyricsViewActivity extends AppCompatActivity {
         };
         @SuppressWarnings("SpellCheckingInspection")
         String[] musicActions = new String[]{
-                "metachanged", "playstatechange", "playstatechanged", "playbackstatechanged", "queuechanged"
+                "metachanged",
+                "playstatechange",
+                "playstatechanged",
+                "playbackstatechanged",
+                "queuechanged"
         };
 
         IntentFilter iF = new IntentFilter();
@@ -145,7 +149,12 @@ public class LyricsViewActivity extends AppCompatActivity {
     private void sendMediaButton(int keyCode) {
         long eventTime = SystemClock.uptimeMillis();
 
-        KeyEvent downEvent = new KeyEvent(eventTime, eventTime, KeyEvent.ACTION_DOWN, keyCode, 0);
+        KeyEvent downEvent = new KeyEvent(
+                eventTime,
+                eventTime,
+                KeyEvent.ACTION_DOWN,
+                keyCode,
+                0);
         mAudioManager.dispatchMediaKeyEvent(downEvent);
 
         // Not necessary ?
@@ -198,12 +207,16 @@ public class LyricsViewActivity extends AppCompatActivity {
 
             case R.id.action_make_font_bigger:
                 fontSize *= 1.1f;
-                ((TextView) findViewById(R.id.result)).setTextSize(TypedValue.COMPLEX_UNIT_PX, fontSize);
+                ((TextView) findViewById(R.id.result)).setTextSize(
+                        TypedValue.COMPLEX_UNIT_PX,
+                        fontSize);
                 break;
 
             case R.id.action_make_font_smaller:
                 fontSize *= 0.9f;
-                ((TextView) findViewById(R.id.result)).setTextSize(TypedValue.COMPLEX_UNIT_PX, fontSize);
+                ((TextView) findViewById(R.id.result)).setTextSize(
+                        TypedValue.COMPLEX_UNIT_PX,
+                        fontSize);
                 break;
 
 
@@ -220,7 +233,8 @@ public class LyricsViewActivity extends AppCompatActivity {
             url = currentLyrics.getUrl();
         } else if (localArtist != null && localTitle != null) {
             try {
-                url = "https://genius.com/search?q=" + URLEncoder.encode(localArtist + " " + localTitle, "utf-8");
+                url = "https://genius.com/search?q="
+                        + URLEncoder.encode(localArtist + " " + localTitle, "utf-8");
             } catch (UnsupportedEncodingException e) {
                 Log.e("openGeniusCom", "UnsupportedEncodingException", e);
             }
@@ -240,7 +254,10 @@ public class LyricsViewActivity extends AppCompatActivity {
         currentArtist = localArtist;
         currentTitle = localTitle;
 
-        if (localArtist == null || localTitle == null || localArtist.length() == 0 || localTitle.length() == 0) {
+        if (localArtist == null
+                || localTitle == null
+                || localArtist.length() == 0
+                || localTitle.length() == 0) {
             return;
         }
 
@@ -362,7 +379,11 @@ public class LyricsViewActivity extends AppCompatActivity {
                 setActionBarTitle(R.string.search);
                 setActionBarSubtitle(searchArtist + " - " + searchTitle);
 
-                String[] param = new String[]{searchArtist, searchTitle, currentArtist, currentTitle};
+                String[] param = new String[]{
+                        searchArtist,
+                        searchTitle,
+                        currentArtist,
+                        currentTitle};
                 new RequestTask(activity).execute(param);
             }
         });
@@ -548,7 +569,9 @@ public class LyricsViewActivity extends AppCompatActivity {
         private final String originalArtist;
         private final String originalTitle;
 
-        OnSelectSong(Genius.GeniusLookUpResult result, String originalArtist, String originalTitle) {
+        OnSelectSong(Genius.GeniusLookUpResult result,
+                     String originalArtist,
+                     String originalTitle) {
             this.result = result;
             this.originalArtist = originalArtist;
             this.originalTitle = originalTitle;
@@ -562,7 +585,11 @@ public class LyricsViewActivity extends AppCompatActivity {
             setActionBarTitle(R.string.loading);
             setActionBarSubtitle(result.getTitle() + " " + getResources().getString(R.string.by_artist) + " " + result.getArtist());
 
-            new RequestTask(activity).execute(this.originalArtist, this.originalTitle, "" + result.getId(), BY_ID);
+            new RequestTask(activity).execute(
+                    this.originalArtist,
+                    this.originalTitle,
+                    Integer.toString(result.getId()),
+                    BY_ID);
         }
     }
 

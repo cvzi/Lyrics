@@ -46,7 +46,9 @@ class Genius {
         dbHelper = new DatabaseOpenHelper(context);
         database = dbHelper.getWritableDatabase();
 
-        ApplicationInfo ai = context.getPackageManager().getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
+        ApplicationInfo ai = context.getPackageManager().getApplicationInfo(
+                context.getPackageName(),
+                PackageManager.GET_META_DATA);
         Bundle bundle = ai.metaData;
         clientAccessToken = bundle.getString(".geniusClientAccessToken");
     }
@@ -57,15 +59,21 @@ class Genius {
     }
 
     Lyrics fromCache(String localArtist, String localTitle) {
-        if (localArtist == null || localTitle == null || localArtist.length() == 0 || localTitle.length() == 0) {
+        if (localArtist == null
+                || localTitle == null
+                || localArtist.length() == 0
+                || localTitle.length() == 0) {
             return null;
         }
 
         String sql = "SELECT " + TABLE_SONGS + "." + FIELD_JSON + " " +
                 "FROM " + TABLE_LOCAL_TRACKS + ", " + TABLE_SONGS + " " +
-                "WHERE " + TABLE_LOCAL_TRACKS + "." + FIELD_GENIUS_ID + " = " + TABLE_SONGS + "." + FIELD_GENIUS_ID + " " +
-                "AND " + TABLE_LOCAL_TRACKS + "." + FIELD_TITLE + " LIKE " + DatabaseUtils.sqlEscapeString(localTitle) + " " +
-                "AND " + TABLE_LOCAL_TRACKS + "." + FIELD_ARTIST + " LIKE " + DatabaseUtils.sqlEscapeString(localArtist) + " " +
+                "WHERE " + TABLE_LOCAL_TRACKS + "." + FIELD_GENIUS_ID
+                + " = " + TABLE_SONGS + "." + FIELD_GENIUS_ID + " " +
+                "AND " + TABLE_LOCAL_TRACKS + "." + FIELD_TITLE
+                + " LIKE " + DatabaseUtils.sqlEscapeString(localTitle) + " " +
+                "AND " + TABLE_LOCAL_TRACKS + "." + FIELD_ARTIST
+                + " LIKE " + DatabaseUtils.sqlEscapeString(localArtist) + " " +
                 "LIMIT 1";
         Cursor cursor = database.rawQuery(sql, null);
         cursor.moveToFirst();
@@ -96,20 +104,27 @@ class Genius {
     }
 
     void deleteFromCache(String localArtist, String localTitle) {
-        if (localArtist == null || localTitle == null || localArtist.length() == 0 || localTitle.length() == 0) {
+        if (localArtist == null
+                || localTitle == null
+                || localArtist.length() == 0
+                || localTitle.length() == 0) {
             return;
         }
-        database.delete(TABLE_LOCAL_TRACKS, TABLE_LOCAL_TRACKS + "." + FIELD_TITLE + " LIKE ? AND " + TABLE_LOCAL_TRACKS + "." + FIELD_ARTIST + " LIKE ?", new String[]{localTitle, localArtist});
+        database.delete(TABLE_LOCAL_TRACKS,
+                TABLE_LOCAL_TRACKS + "." + FIELD_TITLE + " LIKE ? "
+                        + " AND " + TABLE_LOCAL_TRACKS + "." + FIELD_ARTIST + " LIKE ?",
+                new String[]{localTitle, localArtist});
     }
 
     Lyrics fromWeb(GeniusLookUpResult geniusLookUpResult, String localArtist, String localTitle) {
-        return fromWeb("" + geniusLookUpResult.getId(), localArtist, localTitle);
+        return fromWeb(Integer.toString(geniusLookUpResult.getId()), localArtist, localTitle);
     }
 
     Lyrics fromWeb(String geniusId, String localArtist, String localTitle) {
 
         try {
-            URL url = new URL("https://api.genius.com/songs/" + geniusId + "?text_format=plain");
+            URL url = new URL(
+                    "https://api.genius.com/songs/" + geniusId + "?text_format=plain");
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             connection.setReadTimeout(REQUEST_TIMEOUT);
@@ -168,7 +183,8 @@ class Genius {
             Log.e("lookUp()", "JSONException", e);
             return null;
         }
-        String query = jsonObject.toString();  //  {"queries":[{"key":{},"title":"QUERY_TITLE","artist":"QUERY_ARTIST"}]}
+        String query = jsonObject.toString();
+        //  {"queries":[{"key":{},"title":"QUERY_TITLE","artist":"QUERY_ARTIST"}]}
         try {
             URL url = new URL("https://api.genius.com/songs/lookup");
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -219,7 +235,8 @@ class Genius {
             JSONObject root = new JSONObject(jsonString);
 
             if (root.getJSONObject("meta").getInt("status") != 200) {
-                Log.e("parseGeniusJson", "parseGeniusJson: status = " + root.getJSONObject("meta").getInt("status"));
+                Log.e("parseGeniusJson", "parseGeniusJson: status = "
+                        + root.getJSONObject("meta").getInt("status"));
                 return null;
             }
             return root.getJSONObject("response");
@@ -295,9 +312,9 @@ class Genius {
                 try {
                     Reader reader = new BufferedReader(
                             new InputStreamReader(is, StandardCharsets.UTF_8));
-                    int n;
-                    while ((n = reader.read(buffer)) != -1) {
-                        writer.write(buffer, 0, n);
+                    int count;
+                    while ((count = reader.read(buffer)) != -1) {
+                        writer.write(buffer, 0, count);
                     }
                 } finally {
                     is.close();
@@ -313,7 +330,10 @@ class Genius {
 
 
     @SuppressWarnings("SpellCheckingInspection")
-    private void writeToCache(GeniusSong song, String jsonData, String localArtist, String localTitle) {
+    private void writeToCache(GeniusSong song,
+                              String jsonData,
+                              String localArtist,
+                              String localTitle) {
         Long tsLong = System.currentTimeMillis() / 1000;
         String timestamp = tsLong.toString();
 
@@ -324,15 +344,21 @@ class Genius {
         values.put(FIELD_ARTIST, song.getArtist());
         values.put(FIELD_JSON, jsonData);
 
-        database.insertWithOnConflict(TABLE_SONGS, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+        database.insertWithOnConflict(TABLE_SONGS,
+                null,
+                values,
+                SQLiteDatabase.CONFLICT_REPLACE);
 
         values = new ContentValues();
         values.put(FIELD_TITLE, localTitle);
         values.put(FIELD_ARTIST, localArtist);
         values.put(FIELD_GENIUS_ID, song.getId());
 
-        // This is important if there were multiple results, and the user reloaded to choose another result
-        database.delete(TABLE_LOCAL_TRACKS, FIELD_TITLE + "=? AND " + FIELD_ARTIST + "=?", new String[]{localTitle, localArtist});
+        // This is important if there were multiple results,
+        // and the user reloaded to choose another result
+        database.delete(TABLE_LOCAL_TRACKS, FIELD_TITLE + "=? AND "
+                        + FIELD_ARTIST + "=?",
+                new String[]{localTitle, localArtist});
 
         database.insert(TABLE_LOCAL_TRACKS, null, values);
     }
@@ -391,7 +417,7 @@ class Genius {
     class GeniusSong extends GeniusLookUpResult {
 
         private int timestamp;
-        private String lyrics_plain;
+        private String lyricsPlain;
 
         public int getTimestamp() {
             return timestamp;
@@ -402,11 +428,11 @@ class Genius {
         }
 
         String getPlainLyrics() {
-            return lyrics_plain;
+            return lyricsPlain;
         }
 
-        void setPlainLyrics(String lyrics_plain) {
-            this.lyrics_plain = lyrics_plain;
+        void setPlainLyrics(String lyricsPlain) {
+            this.lyricsPlain = lyricsPlain;
         }
     }
 
