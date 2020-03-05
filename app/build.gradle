@@ -9,12 +9,13 @@ android {
             keyPassword 'password'
         }
     }
-    compileSdkVersion 28
-    buildToolsVersion '28.0.3'
+    buildToolsVersion "29.0.3"
+    compileSdkVersion 29
+
     defaultConfig {
         applicationId "sexy.lyrics"
         minSdkVersion 19
-        targetSdkVersion 28
+        targetSdkVersion 29
         versionCode 3
         versionName "3.0"
     }
@@ -27,9 +28,6 @@ android {
             signingConfig signingConfigs.config
             renderscriptDebuggable false
             zipAlignEnabled true
-        }
-        debug {
-            debuggable true
         }
     }
 }
