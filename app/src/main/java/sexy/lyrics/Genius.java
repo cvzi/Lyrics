@@ -334,13 +334,12 @@ class Genius {
     }
 
 
-    @SuppressWarnings("SpellCheckingInspection")
     private void writeToCache(GeniusSong song,
                               String jsonData,
                               String localArtist,
                               String localTitle) {
-        Long tsLong = System.currentTimeMillis() / 1000;
-        String timestamp = tsLong.toString();
+        long tsLong = System.currentTimeMillis() / 1000;
+        String timestamp = String.valueOf(tsLong);
 
         ContentValues values = new ContentValues();
         values.put(FIELD_GENIUS_ID, song.getId());
@@ -369,7 +368,7 @@ class Genius {
     }
 
     @SuppressWarnings("unused")
-    public class GeniusLookUpResult {
+    public static class GeniusLookUpResult {
         private int id;
         private String url;
         private String artist;
@@ -419,7 +418,7 @@ class Genius {
 
 
     @SuppressWarnings("unused")
-    class GeniusSong extends GeniusLookUpResult {
+    static class GeniusSong extends GeniusLookUpResult {
 
         private int timestamp;
         private String lyricsPlain;
