@@ -11,6 +11,8 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
 import android.util.TypedValue;
@@ -96,6 +98,7 @@ public class LyricsViewActivity extends AppCompatActivity {
         @SuppressWarnings("SpellCheckingInspection")
         String[] musicActions = new String[]{
                 "metachanged",
+                "metadatachanged",
                 "playstatechange",
                 "playstatechanged",
                 "playbackstatechanged",
@@ -133,6 +136,14 @@ public class LyricsViewActivity extends AppCompatActivity {
             // Pause and immediately play music to trigger a broadcast of the current song
             sendMediaButton(KeyEvent.KEYCODE_MEDIA_PAUSE);
             sendMediaButton(KeyEvent.KEYCODE_MEDIA_PLAY);
+            final Handler handler = new Handler(Looper.getMainLooper());
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    sendMediaButton(KeyEvent.KEYCODE_MEDIA_PLAY);
+                }
+            }, 20);
+
         }
 
 
