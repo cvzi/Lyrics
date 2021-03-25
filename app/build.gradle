@@ -9,15 +9,15 @@ android {
             keyPassword 'password'
         }
     }
-    buildToolsVersion "29.0.3"
-    compileSdkVersion 29
+    buildToolsVersion "30.0.3"
+    compileSdkVersion 30
 
     defaultConfig {
         applicationId "sexy.lyrics"
         minSdkVersion 19
-        targetSdkVersion 29
-        versionCode 3
-        versionName "3.0"
+        targetSdkVersion 30
+        versionCode 4
+        versionName "4.0"
     }
     buildTypes {
         release {
@@ -34,8 +34,7 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'androidx.appcompat:appcompat:1.0.2'
-    implementation 'com.google.firebase:firebase-appindexing:17.1.0'
+    implementation 'androidx.appcompat:appcompat:1.2.0'
 }
 repositories {
     mavenCentral()
