@@ -29,6 +29,7 @@ import android.widget.TextView;
 import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
 import java.net.URLEncoder;
+import java.text.Normalizer;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
@@ -137,24 +138,16 @@ public class LyricsViewActivity extends AppCompatActivity {
             sendMediaButton(KeyEvent.KEYCODE_MEDIA_PAUSE);
             sendMediaButton(KeyEvent.KEYCODE_MEDIA_PLAY);
             final Handler handler = new Handler(Looper.getMainLooper());
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    sendMediaButton(KeyEvent.KEYCODE_MEDIA_PLAY);
-                }
-            }, 20);
+            handler.postDelayed(() -> sendMediaButton(KeyEvent.KEYCODE_MEDIA_PLAY), 20);
 
         }
 
 
-        textViewResult.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View view) {
-                if (!textViewResult.isTextSelectable()) {
-                    textViewResult.setTextIsSelectable(true);
-                }
-                return false;
+        textViewResult.setOnLongClickListener(view -> {
+            if (!textViewResult.isTextSelectable()) {
+                textViewResult.setTextIsSelectable(true);
             }
+            return false;
         });
 
 
@@ -195,34 +188,41 @@ public class LyricsViewActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        final int action_refresh = R.id.action_refresh;
+        final int action_force_reload = R.id.action_force_reload;
+        final int action_view_website = R.id.action_view_website;
+        final int action_search = R.id.action_search;
+        final int action_make_font_bigger = R.id.action_make_font_bigger;
+        final int action_make_font_smaller = R.id.action_make_font_smaller;
+
         switch (item.getItemId()) {
-            case R.id.action_refresh:
+            case action_refresh:
                 if (currentTitle != null && currentArtist != null) {
                     loadLyrics(currentArtist, currentTitle);
                 }
                 break;
-            case R.id.action_force_reload:
+            case action_force_reload:
                 if (currentTitle != null && currentArtist != null) {
                     loadLyrics(currentArtist, currentTitle, false);
                 }
                 break;
 
-            case R.id.action_view_website:
+            case action_view_website:
                 openGeniusCom(currentTitle, currentArtist);
                 break;
 
-            case R.id.action_search:
+            case action_search:
                 showSearchButton(FROM_MENU);
                 break;
 
-            case R.id.action_make_font_bigger:
+            case action_make_font_bigger:
                 fontSize *= 1.1f;
                 ((TextView) findViewById(R.id.result)).setTextSize(
                         TypedValue.COMPLEX_UNIT_PX,
                         fontSize);
                 break;
 
-            case R.id.action_make_font_smaller:
+            case action_make_font_smaller:
                 fontSize *= 0.9f;
                 ((TextView) findViewById(R.id.result)).setTextSize(
                         TypedValue.COMPLEX_UNIT_PX,
@@ -316,12 +316,7 @@ public class LyricsViewActivity extends AppCompatActivity {
         Button searchButton = new Button(this);
         searchButton.setText(R.string.search);
         searchButton.setTextSize(22);
-        searchButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                showSearchButton(FROM_SELECTOR);
-            }
-        });
+        searchButton.setOnClickListener(view -> showSearchButton(FROM_SELECTOR));
         linearLayout.addView(searchButton);
 
     }
@@ -379,27 +374,24 @@ public class LyricsViewActivity extends AppCompatActivity {
         Button button = new Button(this);
         button.setText(R.string.search_go);
         button.setTextSize(22);
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                hideSearchButton();
+        button.setOnClickListener(view -> {
+            hideSearchButton();
 
-                String searchArtist = editTextArtist.getText().toString();
-                String searchTitle = editTextTitle.getText().toString();
+            String searchArtist1 = editTextArtist.getText().toString();
+            String searchTitle1 = editTextTitle.getText().toString();
 
-                // Removed cached entry:
-                genius.deleteFromCache(searchArtist, searchTitle);
+            // Removed cached entry:
+            genius.deleteFromCache(searchArtist1, searchTitle1);
 
-                setActionBarTitle(R.string.search);
-                setActionBarSubtitle(searchArtist + " - " + searchTitle);
+            setActionBarTitle(R.string.search);
+            setActionBarSubtitle(searchArtist1 + " - " + searchTitle1);
 
-                String[] param = new String[]{
-                        searchArtist,
-                        searchTitle,
-                        currentArtist,
-                        currentTitle};
-                new RequestTask(activity).execute(param);
-            }
+            String[] param = new String[]{
+                    searchArtist1,
+                    searchTitle1,
+                    currentArtist,
+                    currentTitle};
+            new RequestTask(activity).execute(param);
         });
         linearLayout.addView(button);
 
@@ -414,7 +406,7 @@ public class LyricsViewActivity extends AppCompatActivity {
     private boolean online() {
         ConnectivityManager connectivityManager = (ConnectivityManager)
                 getSystemService(Context.CONNECTIVITY_SERVICE);
-        if(connectivityManager == null) {
+        if (connectivityManager == null) {
             return false;
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -532,10 +524,34 @@ public class LyricsViewActivity extends AppCompatActivity {
                 Genius.GeniusLookUpResult[] results = activity.genius.lookUp(searchArtist, searchTitle);
 
                 if (results.length == 0) {
-                    Lyrics noResultsLyrics = new Lyrics(NO_RESULTS_AFTER_SEARCH);
-                    noResultsLyrics.setArtist(searchArtist);
-                    noResultsLyrics.setTitle(searchTitle);
-                    return noResultsLyrics;
+                    // Check for diacritics
+                    String normalizedArtist = Normalizer.normalize(searchArtist, Normalizer.Form.NFD)
+                            .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+                    String normalizedTitle = Normalizer.normalize(searchTitle, Normalizer.Form.NFD)
+                            .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+
+                    if (normalizedArtist.equals(searchArtist) && normalizedTitle.equals(searchTitle)) {
+                        Lyrics noResultsLyrics = new Lyrics(NO_RESULTS_AFTER_SEARCH);
+                        noResultsLyrics.setArtist(searchArtist);
+                        noResultsLyrics.setTitle(searchTitle);
+                        return noResultsLyrics;
+                    } else {
+                        // Search again without the diacritics
+                        Log.d("Lyrics doInBackground", "Search again without the diacritics");
+                        results = activity.genius.lookUp(normalizedArtist, normalizedTitle);
+                        if (results.length == 0) {
+                            Lyrics noResultsLyrics = new Lyrics(NO_RESULTS_AFTER_SEARCH);
+                            noResultsLyrics.setArtist(localArtist);
+                            noResultsLyrics.setTitle(localSong);
+                            return noResultsLyrics;
+                        } else {
+                            Lyrics multipleResultsLyrics = new Lyrics(MULTIPLE_RESULTS);
+                            multipleResultsLyrics.setArtist(localArtist);
+                            multipleResultsLyrics.setTitle(localSong);
+                            multipleResultsLyrics.setResults(results);
+                            return multipleResultsLyrics;
+                        }
+                    }
                 } else {
                     Lyrics multipleResultsLyrics = new Lyrics(MULTIPLE_RESULTS);
                     multipleResultsLyrics.setArtist(localArtist);
