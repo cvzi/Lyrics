@@ -2,4 +2,5 @@
 <resources>
     <color name="colorLyricsText">#FFFFFF</color>
     <color name="colorLinksText">#00D1FF</color>
+    <color name="ic_launcher_background">#FFFF64</color>
 </resources>

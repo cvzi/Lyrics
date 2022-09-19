@@ -483,10 +483,7 @@ public class LyricsViewActivity extends AppCompatActivity {
             String artist = songData[0];
             String song = songData[1];
             if (songData.length < 4) {
-                boolean useCache = true;
-                if (songData.length > 2 && songData[2].equals(NO_CACHE)) {
-                    useCache = false;
-                }
+                boolean useCache = songData.length <= 2 || !songData[2].equals(NO_CACHE);
 
                 Lyrics cached = null;
                 if (useCache) {
