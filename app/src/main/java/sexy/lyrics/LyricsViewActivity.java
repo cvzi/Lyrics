@@ -195,43 +195,29 @@ public class LyricsViewActivity extends AppCompatActivity {
         final int action_make_font_bigger = R.id.action_make_font_bigger;
         final int action_make_font_smaller = R.id.action_make_font_smaller;
 
-        switch (item.getItemId()) {
-            case action_refresh:
-                if (currentTitle != null && currentArtist != null) {
-                    loadLyrics(currentArtist, currentTitle);
-                }
-                break;
-            case action_force_reload:
-                if (currentTitle != null && currentArtist != null) {
-                    loadLyrics(currentArtist, currentTitle, false);
-                }
-                break;
-
-            case action_view_website:
-                openGeniusCom(currentTitle, currentArtist);
-                break;
-
-            case action_search:
-                showSearchButton(FROM_MENU);
-                break;
-
-            case action_make_font_bigger:
-                fontSize *= 1.1f;
-                ((TextView) findViewById(R.id.result)).setTextSize(
-                        TypedValue.COMPLEX_UNIT_PX,
-                        fontSize);
-                break;
-
-            case action_make_font_smaller:
-                fontSize *= 0.9f;
-                ((TextView) findViewById(R.id.result)).setTextSize(
-                        TypedValue.COMPLEX_UNIT_PX,
-                        fontSize);
-                break;
-
-
-            default:
-                break;
+        final int itemId = item.getItemId();
+        if (itemId == action_refresh) {
+            if (currentTitle != null && currentArtist != null) {
+                loadLyrics(currentArtist, currentTitle);
+            }
+        } else if (itemId == action_force_reload) {
+            if (currentTitle != null && currentArtist != null) {
+                loadLyrics(currentArtist, currentTitle, false);
+            }
+        } else if (itemId == action_view_website) {
+            openGeniusCom(currentTitle, currentArtist);
+        } else if (itemId == action_search) {
+            showSearchButton(FROM_MENU);
+        } else if (itemId == action_make_font_bigger) {
+            fontSize *= 1.1f;
+            ((TextView) findViewById(R.id.result)).setTextSize(
+                    TypedValue.COMPLEX_UNIT_PX,
+                    fontSize);
+        } else if (itemId == action_make_font_smaller) {
+            fontSize *= 0.9f;
+            ((TextView) findViewById(R.id.result)).setTextSize(
+                    TypedValue.COMPLEX_UNIT_PX,
+                    fontSize);
         }
         return true;
     }
@@ -266,8 +252,8 @@ public class LyricsViewActivity extends AppCompatActivity {
 
         if (localArtist == null
                 || localTitle == null
-                || localArtist.length() == 0
-                || localTitle.length() == 0) {
+                || localArtist.isEmpty()
+                || localTitle.isEmpty()) {
             return;
         }
 

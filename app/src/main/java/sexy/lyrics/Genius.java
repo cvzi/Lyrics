@@ -62,8 +62,8 @@ class Genius {
     Lyrics fromCache(String localArtist, String localTitle) {
         if (localArtist == null
                 || localTitle == null
-                || localArtist.length() == 0
-                || localTitle.length() == 0) {
+                || localArtist.isEmpty()
+                || localTitle.isEmpty()) {
             return null;
         }
 
@@ -107,8 +107,8 @@ class Genius {
     void deleteFromCache(String localArtist, String localTitle) {
         if (localArtist == null
                 || localTitle == null
-                || localArtist.length() == 0
-                || localTitle.length() == 0) {
+                || localArtist.isEmpty()
+                || localTitle.isEmpty()) {
             return;
         }
         database.delete(TABLE_LOCAL_TRACKS,
