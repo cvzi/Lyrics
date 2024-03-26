@@ -39,7 +39,7 @@
                 android:id="@+id/result"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Hello World!"
+                android:text="Play a song in your favorite audio player"
                 android:textColor="@color/colorLyricsText"
                 android:textSize="16sp" />
         </ScrollView>
