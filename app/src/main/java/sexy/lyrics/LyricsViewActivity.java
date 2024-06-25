@@ -2,13 +2,11 @@ package sexy.lyrics;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,26 +14,30 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.DisplayCutout;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import java.io.UnsupportedEncodingException;
-import java.lang.ref.WeakReference;
-import java.net.URLEncoder;
-import java.text.Normalizer;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
+import androidx.core.util.Function;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.text.Normalizer;
+import java.util.concurrent.Executors;
 
 public class LyricsViewActivity extends AppCompatActivity {
     private static final String BY_ID = "byId";
@@ -68,7 +70,9 @@ public class LyricsViewActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_lyrics_view);
+        setSupportActionBar(findViewById(R.id.toolbar));
 
         final TextView textViewResult = findViewById(R.id.result);
 
@@ -80,43 +84,7 @@ public class LyricsViewActivity extends AppCompatActivity {
             return;
         }
 
-        @SuppressWarnings("SpellCheckingInspection")
-        String[] musicApps = new String[]{
-                "com.amazon.mp3",
-                "com.andrew.apollo",
-                "com.android.music",
-                "com.htc.music",
-                "com.miui.player",
-                "com.nullsoft.winamp",
-                "com.samsung.sec.android.MusicPlayer",
-                "com.sec.android.app.music",
-                "com.sonyericsson.music",
-                "com.spotify.music",
-                "com.real.IMP",
-                "com.rdio.android",
-                "fm.last.android"
-        };
-        @SuppressWarnings("SpellCheckingInspection")
-        String[] musicActions = new String[]{
-                "metachanged",
-                "metadatachanged",
-                "playstatechange",
-                "playstatechanged",
-                "playbackstatechanged",
-                "queuechanged"
-        };
-
-        IntentFilter intentFilter = new IntentFilter();
-
-        for (String app : musicApps) {
-            for (String action : musicActions) {
-                intentFilter.addAction(app + "." + action);
-            }
-        }
-
-        musicBroadcastReceiver.setActivity(this);
-        registerReceiver(musicBroadcastReceiver, intentFilter);
-
+        musicBroadcastReceiver.register(this);
 
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
@@ -153,6 +121,26 @@ public class LyricsViewActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    public void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            // Handle Display cutout for the action bar
+            DisplayCutout cutout = getWindow().getDecorView().getRootWindowInsets().getDisplayCutout();
+            if (cutout != null) {
+                int top = cutout.getSafeInsetTop();
+                if (top > 80) {
+                    Toolbar bar = findViewById(R.id.toolbar);
+                    ViewGroup.LayoutParams lp = bar.getLayoutParams();
+                    int orgHeight = lp.height;
+                    lp.height += cutout.getSafeInsetTop();
+                    bar.setLayoutParams(lp);
+                    bar.setPadding(0, 45, 0, 0);
+                }
+            }
+        }
+    }
+
     private void sendMediaButton(int keyCode) {
         long eventTime = SystemClock.uptimeMillis();
 
@@ -176,7 +164,7 @@ public class LyricsViewActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         genius.close();
-        unregisterReceiver(musicBroadcastReceiver);
+        musicBroadcastReceiver.unRegister();
     }
 
     @Override
@@ -268,7 +256,7 @@ public class LyricsViewActivity extends AppCompatActivity {
         } else {
             param = new String[]{localArtist, localTitle, NO_CACHE};
         }
-        new RequestTask(activity).execute(param);
+        new AsyncRunner(param).run(LyricsViewActivity.this::showLyrics);
     }
 
     private void hideSongSelector() {
@@ -372,12 +360,11 @@ public class LyricsViewActivity extends AppCompatActivity {
             setActionBarTitle(R.string.search);
             setActionBarSubtitle(searchArtist1 + " - " + searchTitle1);
 
-            String[] param = new String[]{
+            new AsyncRunner(
                     searchArtist1,
                     searchTitle1,
                     currentArtist,
-                    currentTitle};
-            new RequestTask(activity).execute(param);
+                    currentTitle).run(LyricsViewActivity.this::showLyrics);
         });
         linearLayout.addView(button);
 
@@ -448,146 +435,6 @@ public class LyricsViewActivity extends AppCompatActivity {
         }
     }
 
-    static class RequestTask extends AsyncTask<String, String, Lyrics> {
-
-        private final WeakReference<LyricsViewActivity> activityReference;
-
-        // only retain a weak reference to the activity
-        RequestTask(LyricsViewActivity context) {
-            activityReference = new WeakReference<>(context);
-        }
-
-        @Override
-        protected Lyrics doInBackground(String... songData) {
-            // Request type by number of parameter:
-            // Normal request:  (2) artist, song
-            // Nocache request: (3) artist, song, NO_CACHE
-            // By id request:   (4) artist, song, id, BY_ID
-            // search request:  (4) searchArtist, searchTitle, localArtist, localSong
-
-            LyricsViewActivity activity = activityReference.get();
-            String artist = songData[0];
-            String song = songData[1];
-            if (songData.length < 4) {
-                boolean useCache = songData.length <= 2 || !songData[2].equals(NO_CACHE);
-
-                Lyrics cached = null;
-                if (useCache) {
-                    cached = activity.genius.fromCache(artist, song);
-                }
-
-                if (cached != null && cached.status()) {
-                    return cached;
-                } else if (activity.online()) {
-                    Genius.GeniusLookUpResult[] results = activity.genius.lookUp(artist, song);
-
-                    if (results.length == 0) {
-                        return new Lyrics(NO_RESULTS);
-                    } else if (results.length == 1) {
-                        return activity.genius.fromWeb(results[0], artist, song);
-                    } else {
-                        Lyrics multipleLyrics = new Lyrics(MULTIPLE_RESULTS);
-                        multipleLyrics.setArtist(artist);
-                        multipleLyrics.setTitle(song);
-                        multipleLyrics.setResults(results);
-                        return multipleLyrics;
-                    }
-                } else {
-                    return new Lyrics(OFFLINE);
-                }
-            } else if (songData[3].equals(BY_ID)) {
-                // Direct download by id
-                return activity.genius.fromWeb(songData[2], artist, song);
-            } else {
-                // Search
-                String searchArtist = songData[0];
-                String searchTitle = songData[1];
-                String localArtist = songData[2];
-                String localSong = songData[3];
-                Genius.GeniusLookUpResult[] results = activity.genius.lookUp(searchArtist, searchTitle);
-
-                if (results.length == 0) {
-                    // Check for diacritics
-                    String normalizedArtist = Normalizer.normalize(searchArtist, Normalizer.Form.NFD)
-                            .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
-                    String normalizedTitle = Normalizer.normalize(searchTitle, Normalizer.Form.NFD)
-                            .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
-
-                    if (normalizedArtist.equals(searchArtist) && normalizedTitle.equals(searchTitle)) {
-                        Lyrics noResultsLyrics = new Lyrics(NO_RESULTS_AFTER_SEARCH);
-                        noResultsLyrics.setArtist(searchArtist);
-                        noResultsLyrics.setTitle(searchTitle);
-                        return noResultsLyrics;
-                    } else {
-                        // Search again without the diacritics
-                        Log.d("Lyrics doInBackground", "Search again without the diacritics");
-                        results = activity.genius.lookUp(normalizedArtist, normalizedTitle);
-                        if (results.length == 0) {
-                            Lyrics noResultsLyrics = new Lyrics(NO_RESULTS_AFTER_SEARCH);
-                            noResultsLyrics.setArtist(localArtist);
-                            noResultsLyrics.setTitle(localSong);
-                            return noResultsLyrics;
-                        } else {
-                            Lyrics multipleResultsLyrics = new Lyrics(MULTIPLE_RESULTS);
-                            multipleResultsLyrics.setArtist(localArtist);
-                            multipleResultsLyrics.setTitle(localSong);
-                            multipleResultsLyrics.setResults(results);
-                            return multipleResultsLyrics;
-                        }
-                    }
-                } else {
-                    Lyrics multipleResultsLyrics = new Lyrics(MULTIPLE_RESULTS);
-                    multipleResultsLyrics.setArtist(localArtist);
-                    multipleResultsLyrics.setTitle(localSong);
-                    multipleResultsLyrics.setResults(results);
-                    return multipleResultsLyrics;
-                }
-            }
-        }
-
-        @Override
-        protected void onPostExecute(Lyrics result) {
-            super.onPostExecute(result);
-
-            LyricsViewActivity activity = activityReference.get();
-
-            TextView textViewResult = activity.findViewById(R.id.result);
-            if (result.status()) {
-                textViewResult.setText(multiTrim(result.getLyrics()));
-
-                activity.setActionBarTitle(result.getArtist() + " - " + result.getTitle());
-                activity.setActionBarSubtitle("");
-
-                // Scroll to top
-                activity.findViewById(R.id.scrollView).scrollTo(0, 0);
-
-                activity.currentLyrics = result;
-            } else {
-                activity.currentLyrics = null;
-                switch (result.getErrorMessage()) {
-                    case MULTIPLE_RESULTS:
-                        activity.showSongSelector(result);
-                        break;
-                    case NO_RESULTS:
-                        activity.setActionBarTitle(R.string.search);
-                        activity.setActionBarSubtitle("");
-                        activity.showSearchButton(NO_RESULTS);
-                        break;
-                    case NO_RESULTS_AFTER_SEARCH:
-                        activity.setActionBarTitle(R.string.search);
-                        activity.setActionBarSubtitle(R.string.sorry);
-                        activity.showSearchButton(NO_RESULTS_AFTER_SEARCH, result);
-                        break;
-                    default:
-                        textViewResult.setText("");
-                        activity.setActionBarTitle(result.getErrorMessage());
-                        activity.setActionBarSubtitle(R.string.sorry);
-                        break;
-                }
-            }
-        }
-    }
-
     class OnSelectSong implements View.OnClickListener {
         private final Genius.GeniusLookUpResult result;
         private final String originalArtist;
@@ -609,12 +456,166 @@ public class LyricsViewActivity extends AppCompatActivity {
             setActionBarTitle(R.string.loading);
             setActionBarSubtitle(result.getTitle() + " " + getResources().getString(R.string.by_artist) + " " + result.getArtist());
 
-            new RequestTask(activity).execute(
+            new AsyncRunner(
                     this.originalArtist,
                     this.originalTitle,
                     Integer.toString(result.getId()),
-                    BY_ID);
+                    BY_ID).run(LyricsViewActivity.this::showLyrics);
+
         }
     }
+
+    private Lyrics loadLyrics(String... songData) {
+        // Request type by number of parameter:
+        // Normal request:  (2) artist, song
+        // Nocache request: (3) artist, song, NO_CACHE
+        // By id request:   (4) artist, song, id, BY_ID
+        // search request:  (4) searchArtist, searchTitle, localArtist, localSong
+        String artist = songData[0];
+        String song = songData[1];
+        if (songData.length < 4) {
+            boolean useCache = songData.length <= 2 || !songData[2].equals(NO_CACHE);
+
+            Lyrics cached = null;
+            if (useCache) {
+                cached = activity.genius.fromCache(artist, song);
+            }
+
+            if (cached != null && cached.status()) {
+                return cached;
+            } else if (activity.online()) {
+                Genius.GeniusLookUpResult[] results = activity.genius.lookUp(artist, song);
+
+                if (results.length == 0) {
+                    Log.d("loadLyrics", "Search again with broader search function");
+                    results = activity.genius.search(artist, song);
+                }
+
+                if (results.length == 0) {
+                    return new Lyrics(NO_RESULTS);
+                } else if (results.length == 1) {
+                    return activity.genius.fromWeb(results[0], artist, song);
+                } else {
+                    Lyrics multipleLyrics = new Lyrics(MULTIPLE_RESULTS);
+                    multipleLyrics.setArtist(artist);
+                    multipleLyrics.setTitle(song);
+                    multipleLyrics.setResults(results);
+                    return multipleLyrics;
+                }
+            } else {
+                return new Lyrics(OFFLINE);
+            }
+        } else if (songData[3].equals(BY_ID)) {
+            // Direct download by id
+            return activity.genius.fromWeb(songData[2], artist, song);
+        } else {
+            // Search
+            String searchArtist = songData[0];
+            String searchTitle = songData[1];
+            String localArtist = songData[2];
+            String localSong = songData[3];
+            Genius.GeniusLookUpResult[] results = activity.genius.lookUp(searchArtist, searchTitle);
+
+            if (results.length == 0) {
+                Log.d("loadLyrics", "Search again with broader search function");
+                results = activity.genius.search(searchArtist, searchTitle);
+            }
+
+            if (results.length == 0) {
+                // Check for diacritics
+                String normalizedArtist = Normalizer.normalize(searchArtist, Normalizer.Form.NFD)
+                        .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+                String normalizedTitle = Normalizer.normalize(searchTitle, Normalizer.Form.NFD)
+                        .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+
+                if (normalizedArtist.equals(searchArtist) && normalizedTitle.equals(searchTitle)) {
+                    Lyrics noResultsLyrics = new Lyrics(NO_RESULTS_AFTER_SEARCH);
+                    noResultsLyrics.setArtist(searchArtist);
+                    noResultsLyrics.setTitle(searchTitle);
+                    return noResultsLyrics;
+                } else {
+                    // Search again without the diacritics
+                    Log.d("loadLyrics", "Search again without the diacritics");
+                    results = activity.genius.lookUp(normalizedArtist, normalizedTitle);
+                    if (results.length == 0) {
+                        Log.d("loadLyrics", "Search again without the diacritics with broader search function");
+                        results = activity.genius.search(searchArtist, searchTitle);
+                    }
+                    if (results.length == 0) {
+                        Lyrics noResultsLyrics = new Lyrics(NO_RESULTS_AFTER_SEARCH);
+                        noResultsLyrics.setArtist(localArtist);
+                        noResultsLyrics.setTitle(localSong);
+                        return noResultsLyrics;
+                    } else {
+                        Lyrics multipleResultsLyrics = new Lyrics(MULTIPLE_RESULTS);
+                        multipleResultsLyrics.setArtist(localArtist);
+                        multipleResultsLyrics.setTitle(localSong);
+                        multipleResultsLyrics.setResults(results);
+                        return multipleResultsLyrics;
+                    }
+                }
+            } else {
+                Lyrics multipleResultsLyrics = new Lyrics(MULTIPLE_RESULTS);
+                multipleResultsLyrics.setArtist(localArtist);
+                multipleResultsLyrics.setTitle(localSong);
+                multipleResultsLyrics.setResults(results);
+                return multipleResultsLyrics;
+            }
+        }
+    }
+
+    private Void showLyrics(Lyrics result) {
+        TextView textViewResult = activity.findViewById(R.id.result);
+        if (result.status()) {
+            textViewResult.setText(multiTrim(result.getLyrics()));
+
+            activity.setActionBarTitle(result.getArtist() + " - " + result.getTitle());
+            activity.setActionBarSubtitle("");
+
+            // Scroll to top
+            activity.findViewById(R.id.scrollView).scrollTo(0, 0);
+
+            activity.currentLyrics = result;
+        } else {
+            activity.currentLyrics = null;
+            switch (result.getErrorMessage()) {
+                case MULTIPLE_RESULTS:
+                    activity.showSongSelector(result);
+                    break;
+                case NO_RESULTS:
+                    activity.setActionBarTitle(R.string.search);
+                    activity.setActionBarSubtitle("");
+                    activity.showSearchButton(NO_RESULTS);
+                    break;
+                case NO_RESULTS_AFTER_SEARCH:
+                    activity.setActionBarTitle(R.string.search);
+                    activity.setActionBarSubtitle(R.string.sorry);
+                    activity.showSearchButton(NO_RESULTS_AFTER_SEARCH, result);
+                    break;
+                default:
+                    textViewResult.setText("");
+                    activity.setActionBarTitle(result.getErrorMessage());
+                    activity.setActionBarSubtitle(R.string.sorry);
+                    break;
+            }
+        }
+        return null;
+    }
+
+    private class AsyncRunner {
+        private final String[] params;
+
+        public AsyncRunner(String... songData) {
+            params = songData;
+        }
+
+        private void run(Function<Lyrics, Void> callback) {
+            Executors.newSingleThreadExecutor().execute(() -> {
+                Lyrics result = loadLyrics(params);
+                new Handler(Looper.getMainLooper()).post(() -> callback.apply(result));
+            });
+        }
+    }
+
 
 }
