@@ -10,8 +10,8 @@ android {
         applicationId = "sexy.lyrics"
         minSdk = 21
         targetSdk = 35
-        versionCode = 9
-        versionName = "5.0"
+        versionCode = 10
+        versionName = "6.0"
     }
     signingConfigs {
         create("release") {
@@ -41,6 +41,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+    viewBinding {
+        enable = true
     }
 
 }
