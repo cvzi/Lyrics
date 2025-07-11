@@ -39,7 +39,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 
 class Genius {
     private static final int REQUEST_TIMEOUT = 20000; // 0 == block indefinitely
@@ -259,7 +258,7 @@ class Genius {
     GeniusLookUpResult[] search(String artist, String song) {
         final String TAG = "lookUp()";
         try {
-            String urlStr = "https://api.genius.com/search?q=" + URLEncoder.encode(artist+" "+song, "UTF-8");
+            String urlStr = "https://api.genius.com/search?q=" + URLEncoder.encode(artist + " " + song, "UTF-8");
             URL url = new URL(urlStr);
 
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();

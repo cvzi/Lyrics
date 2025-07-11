@@ -1,5 +1,7 @@
 package sexy.lyrics;
 
+import static java.lang.Integer.max;
+
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
@@ -14,30 +16,30 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.DisplayCutout;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.core.util.Function;
+import androidx.core.view.DisplayCutoutCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.Normalizer;
 import java.util.concurrent.Executors;
+
+import sexy.lyrics.databinding.ActivityLyricsViewBinding;
 
 public class LyricsViewActivity extends AppCompatActivity {
     private static final String BY_ID = "byId";
@@ -56,25 +58,43 @@ public class LyricsViewActivity extends AppCompatActivity {
     private Lyrics currentLyrics = null;
     private float fontSize = 0;
     private AudioManager audioManager = null;
+    private ActivityLyricsViewBinding binding;
 
-    @SuppressWarnings("StringConcatenationInLoop")
     private static String multiTrim(String str) {
         String[] lines = str.split("\\r?\\n");
-        String re = "";
+        StringBuilder re = new StringBuilder();
         for (String line : lines) {
-            re += line.trim() + "\n";
+            re.append(line.trim()).append("\n");
         }
-        return re.trim();
+        return re.toString().trim();
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        binding = ActivityLyricsViewBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+        setSupportActionBar(binding.toolbar);
 
-        setContentView(R.layout.activity_lyrics_view);
-        setSupportActionBar(findViewById(R.id.toolbar));
+        // Adjust toolbar for cutout on Android P+ and for Android 15 edge-to-edge mode
+        binding.getRoot().setOnApplyWindowInsetsListener((view, insets) -> {
+            WindowInsetsCompat insetsCompat = WindowInsetsCompat.toWindowInsetsCompat(insets, view);
+            int topInset = insetsCompat.getInsets(WindowInsetsCompat.Type.systemBars()).top;
+            DisplayCutoutCompat displayCutout = insetsCompat.getDisplayCutout();
+            int cutoutOffset = displayCutout != null ? displayCutout.getSafeInsetTop() : 0;
+            view.setPadding(0, max(topInset, cutoutOffset), 0, 0);
 
-        final TextView textViewResult = findViewById(R.id.result);
+            // Adjust the toolbar for the navigation bar on Android 15+ edge-to-edge mode
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                int navBarBottom = insetsCompat.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
+                binding.scrollView.setPadding(
+                        binding.scrollView.getPaddingLeft(),
+                        binding.scrollView.getPaddingTop(),
+                        binding.scrollView.getPaddingRight(),
+                        navBarBottom + 3);
+            }
+            return insets;
+        });
 
         try {
             genius = new Genius(this);
@@ -88,7 +108,7 @@ public class LyricsViewActivity extends AppCompatActivity {
 
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
-        fontSize = textViewResult.getTextSize();
+        fontSize = binding.result.getTextSize();
 
         if (savedInstanceState != null) {
             currentArtist = savedInstanceState.getString("currentArtist", null);
@@ -110,35 +130,12 @@ public class LyricsViewActivity extends AppCompatActivity {
 
         }
 
-
-        textViewResult.setOnLongClickListener(view -> {
-            if (!textViewResult.isTextSelectable()) {
-                textViewResult.setTextIsSelectable(true);
+        binding.result.setOnLongClickListener(view -> {
+            if (!binding.result.isTextSelectable()) {
+                binding.result.setTextIsSelectable(true);
             }
             return false;
         });
-
-
-    }
-
-    @Override
-    public void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            // Handle Display cutout for the action bar
-            DisplayCutout cutout = getWindow().getDecorView().getRootWindowInsets().getDisplayCutout();
-            if (cutout != null) {
-                int top = cutout.getSafeInsetTop();
-                if (top > 80) {
-                    Toolbar bar = findViewById(R.id.toolbar);
-                    ViewGroup.LayoutParams lp = bar.getLayoutParams();
-                    int orgHeight = lp.height;
-                    lp.height += cutout.getSafeInsetTop();
-                    bar.setLayoutParams(lp);
-                    bar.setPadding(0, 45, 0, 0);
-                }
-            }
-        }
     }
 
     private void sendMediaButton(int keyCode) {
@@ -198,14 +195,10 @@ public class LyricsViewActivity extends AppCompatActivity {
             showSearchButton(FROM_MENU);
         } else if (itemId == action_make_font_bigger) {
             fontSize *= 1.1f;
-            ((TextView) findViewById(R.id.result)).setTextSize(
-                    TypedValue.COMPLEX_UNIT_PX,
-                    fontSize);
+            binding.result.setTextSize(TypedValue.COMPLEX_UNIT_PX, fontSize);
         } else if (itemId == action_make_font_smaller) {
             fontSize *= 0.9f;
-            ((TextView) findViewById(R.id.result)).setTextSize(
-                    TypedValue.COMPLEX_UNIT_PX,
-                    fontSize);
+            binding.result.setTextSize(TypedValue.COMPLEX_UNIT_PX, fontSize);
         }
         return true;
     }
@@ -260,44 +253,37 @@ public class LyricsViewActivity extends AppCompatActivity {
     }
 
     private void hideSongSelector() {
-        LinearLayout linearLayout = findViewById(R.id.songSelectorLayout);
-        linearLayout.removeAllViews();
+        binding.songSelectorLayout.removeAllViews();
     }
 
     private void showSongSelector(final Lyrics lyrics) {
         hideSearchButton();
         hideSongSelector();
 
-        LinearLayout linearLayout = findViewById(R.id.songSelectorLayout);
-
         setActionBarTitle("");
         setActionBarSubtitle(R.string.please_select_lyrics);
-        ((TextView) findViewById(R.id.result)).setText("");
+        binding.result.setText("");
 
         final Genius.GeniusLookUpResult[] results = lyrics.getResults();
         for (final Genius.GeniusLookUpResult result : results) {
             Button resultButton = new Button(this);
             resultButton.setText(getString(R.string.artist_minus_title, result.getArtist(), result.getTitle()));
             resultButton.setTextSize(22);
-            resultButton.setTextColor(ContextCompat.getColor(
-                    this,
-                    R.color.colorLinksText));
-            resultButton.setOnClickListener(
-                    new OnSelectSong(result, lyrics.getArtist(), lyrics.getTitle()));
-            linearLayout.addView(resultButton);
+            resultButton.setTextColor(ContextCompat.getColor(this, R.color.colorLinksText));
+            resultButton.setOnClickListener(new OnSelectSong(result, lyrics.getArtist(), lyrics.getTitle()));
+            binding.songSelectorLayout.addView(resultButton);
         }
 
         Button searchButton = new Button(this);
         searchButton.setText(R.string.search);
         searchButton.setTextSize(22);
         searchButton.setOnClickListener(view -> showSearchButton(FROM_SELECTOR));
-        linearLayout.addView(searchButton);
+        binding.songSelectorLayout.addView(searchButton);
 
     }
 
     private void hideSearchButton() {
-        LinearLayout linearLayout = findViewById(R.id.searchButtonLayout);
-        linearLayout.removeAllViews();
+        binding.searchButtonLayout.removeAllViews();
     }
 
     private void showSearchButton(String status) {
@@ -315,40 +301,49 @@ public class LyricsViewActivity extends AppCompatActivity {
             searchArtist = lyrics.getArtist();
         }
 
-        ((TextView) findViewById(R.id.result)).setText("");
+        binding.result.setText("");
 
         TextView textView;
-
-        LinearLayout linearLayout = findViewById(R.id.searchButtonLayout);
 
         if (status.equals(NO_RESULTS)) {
             textView = new TextView(this);
             textView.setText(R.string.sorry_no_results);
-            linearLayout.addView(textView);
+            binding.searchButtonLayout.addView(textView);
         }
 
         textView = new TextView(this);
         textView.setText(getString(R.string.x_newline_y,
                 getString(R.string.search_more_results),
                 getString(R.string.artist_colon)));
-        linearLayout.addView(textView);
+        binding.searchButtonLayout.addView(textView);
 
         final EditText editTextArtist = new EditText(this);
         editTextArtist.setText(searchArtist);
-        linearLayout.addView(editTextArtist);
+        binding.searchButtonLayout.addView(editTextArtist);
 
         textView = new TextView(this);
         textView.setText(R.string.title_colon);
-        linearLayout.addView(textView);
+        binding.searchButtonLayout.addView(textView);
 
         final EditText editTextTitle = new EditText(this);
         editTextTitle.setText(searchTitle);
-        linearLayout.addView(editTextTitle);
+        binding.searchButtonLayout.addView(editTextTitle);
 
         Button button = new Button(this);
         button.setText(R.string.search_go);
         button.setTextSize(22);
-        button.setOnClickListener(view -> {
+        button.setOnClickListener(createOnClickHandler(editTextArtist, editTextTitle));
+        binding.searchButtonLayout.addView(button);
+
+        if (status.equals(NO_RESULTS_AFTER_SEARCH)) {
+            textView = new TextView(this);
+            textView.setText(R.string.sorry_no_search_results);
+            binding.searchButtonLayout.addView(textView);
+        }
+    }
+
+    private View.OnClickListener createOnClickHandler(EditText editTextArtist, EditText editTextTitle) {
+        return view -> {
             hideSearchButton();
 
             String searchArtist1 = editTextArtist.getText().toString();
@@ -360,20 +355,9 @@ public class LyricsViewActivity extends AppCompatActivity {
             setActionBarTitle(R.string.search);
             setActionBarSubtitle(searchArtist1 + " - " + searchTitle1);
 
-            new AsyncRunner(
-                    searchArtist1,
-                    searchTitle1,
-                    currentArtist,
-                    currentTitle).run(LyricsViewActivity.this::showLyrics);
-        });
-        linearLayout.addView(button);
-
-        if (status.equals(NO_RESULTS_AFTER_SEARCH)) {
-            textView = new TextView(this);
-            textView.setText(R.string.sorry_no_search_results);
-            linearLayout.addView(textView);
-        }
-
+            new AsyncRunner(searchArtist1, searchTitle1, currentArtist, currentTitle)
+                    .run(LyricsViewActivity.this::showLyrics);
+        };
     }
 
     private boolean online() {
@@ -450,7 +434,6 @@ public class LyricsViewActivity extends AppCompatActivity {
 
         @Override
         public void onClick(View view) {
-
             hideSongSelector();
 
             setActionBarTitle(R.string.loading);
@@ -565,15 +548,14 @@ public class LyricsViewActivity extends AppCompatActivity {
     }
 
     private Void showLyrics(Lyrics result) {
-        TextView textViewResult = activity.findViewById(R.id.result);
         if (result.status()) {
-            textViewResult.setText(multiTrim(result.getLyrics()));
+            binding.result.setText(multiTrim(result.getLyrics()));
 
             activity.setActionBarTitle(result.getArtist() + " - " + result.getTitle());
             activity.setActionBarSubtitle("");
 
             // Scroll to top
-            activity.findViewById(R.id.scrollView).scrollTo(0, 0);
+            binding.scrollView.scrollTo(0, 0);
 
             activity.currentLyrics = result;
         } else {
@@ -593,7 +575,7 @@ public class LyricsViewActivity extends AppCompatActivity {
                     activity.showSearchButton(NO_RESULTS_AFTER_SEARCH, result);
                     break;
                 default:
-                    textViewResult.setText("");
+                    binding.result.setText("");
                     activity.setActionBarTitle(result.getErrorMessage());
                     activity.setActionBarSubtitle(R.string.sorry);
                     break;
@@ -610,10 +592,14 @@ public class LyricsViewActivity extends AppCompatActivity {
         }
 
         private void run(Function<Lyrics, Void> callback) {
-            Executors.newSingleThreadExecutor().execute(() -> {
-                Lyrics result = loadLyrics(params);
-                new Handler(Looper.getMainLooper()).post(() -> callback.apply(result));
-            });
+            try (var executor = Executors.newSingleThreadExecutor()) {
+                executor.execute(() -> {
+                    Lyrics result = loadLyrics(params);
+                    new Handler(Looper.getMainLooper()).post(() -> callback.apply(result));
+                });
+            } catch (Exception e) {
+                Log.e("AsyncRunner", "Error running async lyrics load", e);
+            }
         }
     }
 

@@ -3,11 +3,14 @@ package sexy.lyrics;
 
 import static android.content.Context.RECEIVER_EXPORTED;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
+
+import androidx.annotation.NonNull;
 
 import java.lang.ref.WeakReference;
 
@@ -55,6 +58,7 @@ public class MusicBroadcastReceiver extends BroadcastReceiver {
         }
     }
 
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     public void register(LyricsViewActivity context) {
         this.activity = new WeakReference<>(context);
 
@@ -74,6 +78,17 @@ public class MusicBroadcastReceiver extends BroadcastReceiver {
                 "com.rdio.android",
                 "fm.last.android"
         };
+        IntentFilter intentFilter = getIntentFilter(musicApps);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(this, intentFilter, RECEIVER_EXPORTED);
+        } else {
+            context.registerReceiver(this, intentFilter);
+        }
+    }
+
+    @NonNull
+    private static IntentFilter getIntentFilter(String[] musicApps) {
         @SuppressWarnings("SpellCheckingInspection")
         String[] musicActions = new String[]{
                 "metachanged",
@@ -91,12 +106,7 @@ public class MusicBroadcastReceiver extends BroadcastReceiver {
                 intentFilter.addAction(app + "." + action);
             }
         }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(this, intentFilter, RECEIVER_EXPORTED);
-        } else {
-            context.registerReceiver(this, intentFilter);
-        }
+        return intentFilter;
     }
 
     public void unRegister() {
