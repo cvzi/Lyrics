@@ -4,14 +4,14 @@ plugins {
 
 android {
     namespace = "sexy.lyrics"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "sexy.lyrics"
         minSdk = 21
-        targetSdk = 35
-        versionCode = 10
-        versionName = "6.0"
+        targetSdk = 36
+        versionCode = 11
+        versionName = "7.0"
     }
     signingConfigs {
         create("release") {
@@ -45,7 +45,10 @@ android {
     viewBinding {
         enable = true
     }
-
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
 }
 
 dependencies {
