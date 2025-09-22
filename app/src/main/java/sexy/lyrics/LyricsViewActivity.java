@@ -50,6 +50,7 @@ public class LyricsViewActivity extends AppCompatActivity {
     private static final String FROM_MENU = "#frommenu";
     private static final String FROM_SELECTOR = "#fromselector";
     private static final String OFFLINE = "#offline";
+    private static final String SHARED_PREFERENCES_FILE = "lyrics.preferences";
     private final MusicBroadcastReceiver musicBroadcastReceiver = new MusicBroadcastReceiver();
     private final LyricsViewActivity activity = this;
     private Genius genius;
@@ -123,11 +124,10 @@ public class LyricsViewActivity extends AppCompatActivity {
             loadLyrics(currentArtist, currentTitle);
         } else if (audioManager.isMusicActive()) {
             // Pause and immediately play music to trigger a broadcast of the current song
-            sendMediaButton(KeyEvent.KEYCODE_MEDIA_PAUSE);
-            sendMediaButton(KeyEvent.KEYCODE_MEDIA_PLAY);
+            sendMediaButton(audioManager, KeyEvent.KEYCODE_MEDIA_PAUSE);
+            sendMediaButton(audioManager, KeyEvent.KEYCODE_MEDIA_PLAY);
             final Handler handler = new Handler(Looper.getMainLooper());
-            handler.postDelayed(() -> sendMediaButton(KeyEvent.KEYCODE_MEDIA_PLAY), 20);
-
+            handler.postDelayed(() -> sendMediaButton(audioManager, KeyEvent.KEYCODE_MEDIA_PLAY), 20);
         }
 
         binding.result.setOnLongClickListener(view -> {
@@ -138,7 +138,15 @@ public class LyricsViewActivity extends AppCompatActivity {
         });
     }
 
-    private void sendMediaButton(int keyCode) {
+    @Override
+    public void onResume() {
+        super.onResume();
+        restoreFontSize();
+
+        getWindow().setNavigationBarColor(getResources().getColor(android.R.color.transparent));
+    }
+
+    private void sendMediaButton(AudioManager audioManager,int keyCode) {
         long eventTime = SystemClock.uptimeMillis();
 
         KeyEvent downEvent = new KeyEvent(
@@ -196,9 +204,11 @@ public class LyricsViewActivity extends AppCompatActivity {
         } else if (itemId == action_make_font_bigger) {
             fontSize *= 1.1f;
             binding.result.setTextSize(TypedValue.COMPLEX_UNIT_PX, fontSize);
+            saveFontSize(fontSize);
         } else if (itemId == action_make_font_smaller) {
             fontSize *= 0.9f;
             binding.result.setTextSize(TypedValue.COMPLEX_UNIT_PX, fontSize);
+            saveFontSize(fontSize);
         }
         return true;
     }
@@ -603,5 +613,20 @@ public class LyricsViewActivity extends AppCompatActivity {
         }
     }
 
+    private void saveFontSize(float fontSize) {
+        getSharedPreferences(SHARED_PREFERENCES_FILE, Context.MODE_PRIVATE)
+                .edit()
+                .putFloat("fontSize", fontSize)
+                .apply();
+    }
+
+    private void restoreFontSize() {
+        float value = getSharedPreferences(SHARED_PREFERENCES_FILE, Context.MODE_PRIVATE)
+                .getFloat("fontSize", -1);
+        if (value > 0) {
+            fontSize = value;
+            binding.result.setTextSize(TypedValue.COMPLEX_UNIT_PX, fontSize);
+        }
+    }
 
 }
