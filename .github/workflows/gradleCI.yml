@@ -63,7 +63,7 @@ jobs:
 
     - name: 📜 Attest
       if: false
-      uses: actions/attest-build-provenance@v2
+      uses: actions/attest-build-provenance@v3
       with:
         subject-path: 'lyrics_commit_${{ github.sha }}.apk'
 
@@ -101,7 +101,7 @@ jobs:
 
     - name: 📜 Attest
       if: ${{ github.ref_type == 'tag' }}
-      uses: actions/attest-build-provenance@v2
+      uses: actions/attest-build-provenance@v3
       with:
         subject-path: 'lyrics${{ steps.version.outputs.versionCode }}.apk'
 
