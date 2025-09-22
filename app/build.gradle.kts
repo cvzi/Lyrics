@@ -13,12 +13,29 @@ android {
         versionCode = 11
         versionName = "7.0"
     }
-    signingConfigs {
-        create("release") {
-            storeFile = rootProject.file("mykey.jks")
-            storePassword = "password"
-            keyAlias = "key0"
-            keyPassword = "spassword"
+    if (project.hasProperty("keystore")) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(project.property("keystore") as String)
+                storePassword = project.property("keystorepassword") as String
+                keyAlias = project.property("keystorealias") as String
+                keyPassword = project.property("keystorekeypassword") as String
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
+            }
+        }
+    } else {
+        signingConfigs {
+            create("release") {
+                storeFile = rootProject.file("mykey.jks")
+                storePassword = "password"
+                keyAlias = "key0"
+                keyPassword = "password"
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
+           }
         }
     }
     buildTypes {
