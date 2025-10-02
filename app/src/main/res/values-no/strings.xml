@@ -18,4 +18,5 @@
     <string name="search">Søk</string>
     <string name="action_search">Søk/feil tekst</string>
     <string name="search_go">Søk</string>
+    <string name="action_switch_theme">Bytt AMOLED-tema</string>
 </resources>

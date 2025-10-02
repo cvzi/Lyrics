@@ -17,4 +17,5 @@
     <string name="sorry_no_results">Lo siento, no hay resultados.</string>
     <string name="sorry_no_search_results">Lo siento, no hay resultados de búsqueda.</string>
     <string name="search_go">Buscar</string>
+    <string name="action_switch_theme">Cambiar tema AMOLED</string>
 </resources>

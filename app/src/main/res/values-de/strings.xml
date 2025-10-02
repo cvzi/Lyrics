@@ -17,4 +17,5 @@
     <string name="sorry_no_search_results">Sorry, keine Suchergebnisse.</string>
     <string name="action_search">Suche/Falscher Text</string>
     <string name="search_go">Suchen</string>
+    <string name="action_switch_theme">AMOLED-Design</string>
 </resources>
