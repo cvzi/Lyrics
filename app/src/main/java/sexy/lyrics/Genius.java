@@ -374,7 +374,7 @@ class Genius {
     GeniusLookUpResult[] search(String artist, String song) {
         final String TAG = "search()";
         try {
-            String urlStr = "https://api.genius.com/search?q=" + URLEncoder.encode(artist + " " + song, StandardCharsets.UTF_8);
+            String urlStr = "https://api.genius.com/search?q=" + URLEncoder.encode(artist + " " + song, "UTF-8");
             URL url = new URL(urlStr);
 
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
