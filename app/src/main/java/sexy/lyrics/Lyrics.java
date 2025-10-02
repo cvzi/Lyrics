@@ -2,6 +2,7 @@ package sexy.lyrics;
 
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class Lyrics {
+    private int songId;
     private String lyrics;
     private String title;
     private String artist;
@@ -17,6 +18,13 @@ public class Lyrics {
     public Lyrics(String error) {
         status = false;
         errorMessage = error;
+    }
+    public int getId() {
+        return songId;
+    }
+
+    public void setId(int songId) {
+        this.songId = songId;
     }
 
     public String getLyrics() {

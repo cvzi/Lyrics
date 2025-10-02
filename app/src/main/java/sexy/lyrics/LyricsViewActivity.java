@@ -4,6 +4,7 @@ import static java.lang.Integer.max;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
@@ -72,6 +73,14 @@ public class LyricsViewActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Read theme preference before calling super.onCreate()
+        SharedPreferences prefs = getSharedPreferences("settings", MODE_PRIVATE);
+        boolean amoledTheme = prefs.getBoolean("amoled_theme", false);
+        if (amoledTheme) {
+            setTheme(R.style.AppTheme_AMOLED);
+        } else {
+            setTheme(R.style.AppTheme);
+        }
         super.onCreate(savedInstanceState);
         binding = ActivityLyricsViewBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -187,6 +196,7 @@ public class LyricsViewActivity extends AppCompatActivity {
         final int action_search = R.id.action_search;
         final int action_make_font_bigger = R.id.action_make_font_bigger;
         final int action_make_font_smaller = R.id.action_make_font_smaller;
+        final int action_toggle_theme = R.id.action_toggle_theme;
 
         final int itemId = item.getItemId();
         if (itemId == action_refresh) {
@@ -209,6 +219,12 @@ public class LyricsViewActivity extends AppCompatActivity {
             fontSize *= 0.9f;
             binding.result.setTextSize(TypedValue.COMPLEX_UNIT_PX, fontSize);
             saveFontSize(fontSize);
+        } else if (itemId == action_toggle_theme) {
+            SharedPreferences prefs = getSharedPreferences("settings", MODE_PRIVATE);
+            boolean amoledTheme = prefs.getBoolean("amoled_theme", false);
+            prefs.edit().putBoolean("amoled_theme", !amoledTheme).apply();
+            recreate();
+            return true;
         }
         return true;
     }
@@ -559,14 +575,27 @@ public class LyricsViewActivity extends AppCompatActivity {
 
     private Void showLyrics(Lyrics result) {
         if (result.status()) {
-            binding.result.setText(multiTrim(result.getLyrics()));
+            if (result.getLyrics() == null) {
+                genius.fetchLyricsFromWebAsync(result, updatedResult -> {
+                    if (updatedResult.getLyrics() == null) {
+                        binding.result.setText("Error while extracting lyrics from genius.com website");
+                        activity.setActionBarSubtitle(R.string.sorry);
+                        return;
+                    }
 
+                    binding.result.setText(multiTrim(updatedResult.getLyrics()));
+                    activity.setActionBarTitle(updatedResult.getArtist() + " - " + updatedResult.getTitle());
+                    activity.setActionBarSubtitle("");
+                    binding.scrollView.scrollTo(0, 0);
+                    activity.currentLyrics = updatedResult;
+                });
+                return null;
+            }
+            binding.result.setText(multiTrim(result.getLyrics()));
             activity.setActionBarTitle(result.getArtist() + " - " + result.getTitle());
             activity.setActionBarSubtitle("");
-
             // Scroll to top
             binding.scrollView.scrollTo(0, 0);
-
             activity.currentLyrics = result;
         } else {
             activity.currentLyrics = null;

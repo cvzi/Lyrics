@@ -2,11 +2,12 @@
 agp = "8.13.0"
 kotlin = "2.2.20"
 appcompat = "1.7.1"
+material = "1.13.0"
 
 [libraries]
 org-jetbrains-kotlin-kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom", version.ref = "kotlin" }
 appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-

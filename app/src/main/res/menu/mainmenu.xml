@@ -39,4 +39,9 @@
         android:title="@string/action_view_website"
         app:showAsAction="never" />
 
+    <item
+        android:id="@+id/action_toggle_theme"
+        android:title="@string/action_switch_theme"
+        app:showAsAction="never" />
+
 </menu>

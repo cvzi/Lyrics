@@ -1,6 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="background_default">#121212</color>
+    <color name="black">#000000</color>
+    <color name="purple_500">#6200EE</color>
+    <color name="purple_700">#3700B3</color>
+    <color name="teal_200">#03DAC5</color>
     <color name="colorLyricsText">#FFFFFF</color>
-    <color name="colorLinksText">#00D1FF</color>
     <color name="ic_launcher_background">#FFFF64</color>
+    <color name="colorLinksText">#2196F3</color>
+    <color name="dark_gray">#212121</color>
 </resources>

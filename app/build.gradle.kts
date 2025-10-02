@@ -71,5 +71,5 @@ android {
 dependencies {
     implementation(libs.appcompat)
     implementation(platform(libs.org.jetbrains.kotlin.kotlin.bom))
-
+    implementation(libs.material)
 }
