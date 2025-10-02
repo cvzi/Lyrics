@@ -10,8 +10,8 @@ android {
         applicationId = "sexy.lyrics"
         minSdk = 21
         targetSdk = 36
-        versionCode = 12
-        versionName = "8.0"
+        versionCode = 13
+        versionName = "9.0"
     }
     if (project.hasProperty("keystore")) {
         signingConfigs {
