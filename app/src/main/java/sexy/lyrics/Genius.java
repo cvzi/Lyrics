@@ -17,6 +17,8 @@ import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -39,6 +41,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.Executors;
 
 class Genius {
     private static final int REQUEST_TIMEOUT = 20000; // 0 == block indefinitely
@@ -55,6 +58,118 @@ class Genius {
                 PackageManager.GET_META_DATA);
         Bundle bundle = ai.metaData;
         clientAccessToken = bundle.getString(".geniusClientAccessToken");
+    }
+
+    /**
+     * Extract lyrics from Genius.com HTML using the __PRELOADED_STATE__ JSON if present.
+     * See https://github.com/cvzi/genius-downloader/blob/master/id3rapgenius.py
+     *
+     * @param html HTML content of the Genius lyrics page
+     * @return Extracted lyrics or null if not found
+     */
+    public static String extractLyricsFromHtml(String html) {
+        if (html == null || html.isEmpty()) return null;
+        try {
+            // Check for __PRELOADED_STATE__ JSON
+            String marker = "__PRELOADED_STATE__ = JSON.parse('";
+            int idx = html.indexOf(marker);
+            if (idx != -1) {
+                int start = idx + marker.length();
+                int end = html.indexOf("');\n", start);
+                if (end > start) {
+                    String jsonStr = html.substring(start, end);
+                    // Correct unescaping: first \\ -> \, then \" -> "
+                    jsonStr = jsonStr.replace("\\\\", "\\");
+                    jsonStr = jsonStr.replace("\\\"", "\"");
+                    try {
+                        JSONObject jdata = new JSONObject(jsonStr);
+                        JSONObject body = jdata.getJSONObject("songPage")
+                                .getJSONObject("lyricsData")
+                                .getJSONObject("body");
+                        StringBuilder lyricsBuilder = new StringBuilder();
+                        parseJdata(body, lyricsBuilder);
+                        String lyrics = lyricsBuilder.toString();
+                        lyrics = lyrics.replaceAll("\r", "").replaceAll("\n{2,}", "\n").trim();
+
+                        if (lyrics.isEmpty()) {
+                            if (!jdata.getJSONObject("songPage")
+                                    .getJSONObject("lyricsData").isNull("lyricsPlaceholderReason")) {
+                                String reason = jdata.getJSONObject("songPage")
+                                        .getJSONObject("lyricsData").
+                                        getString("lyricsPlaceholderReason");
+                                lyrics = "• No lyrics found. Reason: '" + reason + "' •\n\n\nTry 'View on genius.com' in the menu for more information.";
+                            } else {
+                                lyrics = "• Lyrics are empty •";
+                            }
+                        }
+                        return lyrics;
+                    } catch (JSONException e) {
+                        // Parsing failed
+                        Log.e("extractLyricsFromHtml", "JSONException: " + e);
+                    }
+                } else {
+                    Log.e("extractLyricsFromHtml", "No end of __PRELOADED_STATE__");
+                }
+            } else {
+                Log.e("extractLyricsFromHtml", "No __PRELOADED_STATE__");
+            }
+            Log.e("extractLyricsFromHtml", "No lyrics extracted");
+            // No lyrics found
+            return null;
+        } catch (Exception e) {
+            // Log error if needed
+            Log.e("extractLyricsFromHtml", "Error: " + e);
+            return null;
+        }
+    }
+
+    /**
+     * Recursively parse Genius.com lyrics JSON structure to extract text and line breaks.
+     */
+    private static void parseJdata(JSONObject obj, StringBuilder arr) {
+        if (!obj.has("children")) return;
+        JSONArray children = obj.optJSONArray("children");
+        if (children == null) return;
+        for (int i = 0; i < children.length(); i++) {
+            Object child = children.opt(i);
+            if (child instanceof String) {
+                arr.append((String) child);
+            } else if (child instanceof JSONObject childObj) {
+                parseJdata(childObj, arr);
+                if ("br".equals(childObj.optString("tag"))) {
+                    arr.append("\n");
+                }
+            }
+        }
+    }
+
+    /**
+     * Download HTML from a given URL using HttpURLConnection.
+     */
+    public static String downloadLyricsHtml(String urlStr) {
+        try {
+            java.net.URL url = new java.net.URL(urlStr);
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Android)");
+            conn.setConnectTimeout(10000);
+            conn.setReadTimeout(10000);
+            int responseCode = conn.getResponseCode();
+            if (responseCode == 200) {
+                java.io.InputStream is = conn.getInputStream();
+                java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
+                String html = s.hasNext() ? s.next() : "";
+                is.close();
+                return html;
+            }
+        } catch (Exception e) {
+            Log.e("downloadLyricsHtml", e.toString());
+        }
+        return null;
+    }
+
+    private static String escapeJson(String s) {
+        if (s == null) return "";
+        return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "");
     }
 
     void close() {
@@ -131,7 +246,7 @@ class Genius {
             url = new URL(
                     "https://api.genius.com/songs/" + geniusId + "?text_format=plain");
         } catch (MalformedURLException e) {
-            Log.e("fromWeb", "Redirect???"); // TODO
+            Log.e(TAG, "Redirect???"); // TODO
             return null;
         }
         try {
@@ -161,6 +276,7 @@ class Genius {
                 writeToCache(song, result, localArtist, localTitle);
 
                 Lyrics lyrics = new Lyrics();
+                lyrics.setId(song.getId());
                 lyrics.setArtist(song.getArtist());
                 lyrics.setTitle(song.getTitle());
                 lyrics.setUrl(song.getUrl());
@@ -256,9 +372,9 @@ class Genius {
      * @return Array of GeniusLookUpResult, empty if no results or errors occurred
      */
     GeniusLookUpResult[] search(String artist, String song) {
-        final String TAG = "lookUp()";
+        final String TAG = "search()";
         try {
-            String urlStr = "https://api.genius.com/search?q=" + URLEncoder.encode(artist + " " + song, "UTF-8");
+            String urlStr = "https://api.genius.com/search?q=" + URLEncoder.encode(artist + " " + song, StandardCharsets.UTF_8);
             URL url = new URL(urlStr);
 
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -287,19 +403,18 @@ class Genius {
         return new GeniusLookUpResult[0];
     }
 
-
     private JSONObject parseGeniusJson(String jsonString) {
         try {
             JSONObject root = new JSONObject(jsonString);
 
             if (root.getJSONObject("meta").getInt("status") != 200) {
-                Log.e("parseGeniusJson", "parseGeniusJson: status = "
+                Log.e("parseGeniusJson1", "parseGeniusJson: status = "
                         + root.getJSONObject("meta").getInt("status"));
                 return null;
             }
             return root.getJSONObject("response");
         } catch (JSONException e) {
-            Log.e("parseGeniusJson", e.toString());
+            Log.e("parseGeniusJson2", e.toString());
             return null;
         }
     }
@@ -326,12 +441,12 @@ class Genius {
 
                     results.add(result);
                 } catch (JSONException e) {
-                    Log.e("Genius Hits", e.toString());
+                    Log.e("parseGeniusLookup1", e.toString());
                 }
             }
             return results.toArray(new GeniusLookUpResult[0]);
         } catch (JSONException e) {
-            Log.e("parseGeniusLookup", e.toString());
+            Log.e("parseGeniusLookup2", e.toString());
             return new GeniusLookUpResult[0];
         }
     }
@@ -361,7 +476,7 @@ class Genius {
 
                     results.add(result);
                 } catch (JSONException e) {
-                    Log.e("Genius Hits", e.toString());
+                    Log.e("parseGeniusSearch1", e.toString());
                 }
             }
 
@@ -431,7 +546,7 @@ class Genius {
 
             return arr;
         } catch (JSONException e) {
-            Log.e("parseGeniusSearch", e.toString());
+            Log.e("parseGeniusSearch2", e.toString());
             return new GeniusLookUpResult[0];
         }
     }
@@ -447,7 +562,11 @@ class Genius {
             result.setUrl(song.getString("url"));
             result.setThumbnail(song.getString("header_image_thumbnail_url"));
             result.setArtist(song.getJSONObject("primary_artist").getString("name"));
-            result.setPlainLyrics(song.getJSONObject("lyrics").getString("plain"));
+            if (song.has("lyrics")) {
+                result.setPlainLyrics(song.getJSONObject("lyrics").getString("plain"));
+            } else {
+                result.setPlainLyrics(null);
+            }
 
             return result;
         } catch (JSONException e) {
@@ -484,11 +603,35 @@ class Genius {
         }
     }
 
+    private void writeToCache(Lyrics result) {
+        GeniusSong song = new GeniusSong() {{
+            setId(result.getId());
+            setTitle(result.getTitle());
+            setArtist(result.getArtist());
+            setUrl(result.getUrl());
+            setPlainLyrics(result.getLyrics());
+        }};
 
-    private void writeToCache(GeniusSong song,
-                              String jsonData,
-                              String localArtist,
-                              String localTitle) {
+        // This is a scraped result, not from the API, so create a fake API result
+        String jsonData = "{" +
+                "\"meta\":{\"status\":200}," +
+                "\"response\":{\"song\":{" +
+                "\"primary_artist\":{\"name\":\"" + escapeJson(song.getArtist()) + "\"}," +
+                "\"primary_artist_names\":\"" + escapeJson(song.getArtist()) + "\"," +
+                "\"url\":\"" + escapeJson(song.getUrl()) + "\"," +
+                "\"title\":\"" + escapeJson(song.getTitle()) + "\"," +
+                "\"id\":" + song.getId() + "," +
+                "\"header_image_thumbnail_url\":\"\"," +
+                "\"lyrics\":{\"plain\":\"" + escapeJson(song.getPlainLyrics()) + "\"}" +
+                "}}}";
+
+        writeToCache(song, jsonData, result.getArtist(), result.getTitle());
+    }
+
+    void writeToCache(GeniusSong song,
+                      String jsonData,
+                      String localArtist,
+                      String localTitle) {
         long tsLong = System.currentTimeMillis() / 1000;
         String timestamp = String.valueOf(tsLong);
 
@@ -516,6 +659,40 @@ class Genius {
                 new String[]{localTitle, localArtist});
 
         database.insert(TABLE_LOCAL_TRACKS, null, values);
+    }
+
+    /**
+     * Asynchronously download and extract lyrics from a Genius.com URL.
+     * Calls the callback with the updated Lyrics object.
+     */
+    public void fetchLyricsFromWebAsync(final Lyrics result, final Callback<Lyrics> callback) {
+        try (java.util.concurrent.ExecutorService executor = Executors.newSingleThreadExecutor()) {
+            executor.execute(() -> {
+                Log.v("fetchLyricsFromWebAsync", "Downloading lyrics from " + result.getUrl());
+                String html = downloadLyricsHtml(result.getUrl());
+                String lyrics = extractLyricsFromHtml(html);
+                if (lyrics != null && !lyrics.isEmpty()) {
+                    result.setLyrics(lyrics);
+                    // Build a JSON string similar to the Genius API response
+                    writeToCache(result);
+                } else {
+                    Log.e("fetchLyricsFromWebAsync", "No lyrics found in HTML");
+                }
+                // Post result to main thread
+                new Handler(Looper.getMainLooper()).post(() -> callback.onResult(result));
+            });
+        } catch (Exception e) {
+            Log.e("fetchLyricsFromWebAsync", e.toString());
+            result.setLyrics(e.toString());
+            new Handler(Looper.getMainLooper()).post(() -> callback.onResult(result));
+        }
+    }
+
+    /**
+     * Simple callback interface for async results.
+     */
+    public interface Callback<T> {
+        void onResult(T value);
     }
 
     @SuppressWarnings("unused")
@@ -593,5 +770,3 @@ class Genius {
 
 
 }
-
-
