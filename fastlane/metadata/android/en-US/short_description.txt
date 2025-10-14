@@ -1,1 +1,1 @@
-show lyrics from the Genius.com API
+scrapes songtexts from Genius.com and displays just the lyrics without clutter
