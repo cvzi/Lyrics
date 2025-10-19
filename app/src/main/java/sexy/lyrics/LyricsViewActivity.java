@@ -40,6 +40,7 @@ import androidx.core.util.Function;
 import androidx.core.view.DisplayCutoutCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
@@ -284,8 +285,11 @@ public class LyricsViewActivity extends AppCompatActivity {
         if (currentLyrics != null) {
             url = currentLyrics.getUrl();
         } else if (localArtist != null && localTitle != null) {
-            url = "https://genius.com/search?q="
-                    + URLEncoder.encode(localArtist + " " + localTitle, StandardCharsets.UTF_8);
+            try {
+                url = "https://genius.com/search?q=" + URLEncoder.encode(localArtist + " " + localTitle, "utf-8");
+            } catch (UnsupportedEncodingException e) {
+                Log.e("openGeniusCom", "UnsupportedEncodingException", e);
+            }
         }
 
         Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
