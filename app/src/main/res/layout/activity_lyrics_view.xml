@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?><!--suppress CheckTagEmptyBody -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:paddingLeft="0dp"
     android:paddingTop="0dp"
     android:paddingRight="0dp"
@@ -23,14 +23,14 @@
             android:background="?attr/colorPrimary"
             android:elevation="4dp"
             android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
-            app:popupTheme="@style/ThemeOverlay.AppCompat.Dark"/>
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Dark" />
 
 
-            <LinearLayout
-                android:id="@+id/searchButtonLayout"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"></LinearLayout>
+        <LinearLayout
+            android:id="@+id/searchButtonLayout"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"></LinearLayout>
 
         <LinearLayout
             android:id="@+id/songSelectorLayout"
@@ -46,13 +46,37 @@
             android:paddingRight="5dp"
             android:paddingBottom="5dp">
 
-            <TextView
-                android:id="@+id/result"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:text="Play a song in your favorite audio player"
-                android:textColor="@color/colorLyricsText"
-                android:textSize="16sp" />
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/result"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Play a song in your favorite audio player"
+                    android:textColor="@color/colorLyricsText"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:id="@+id/notificationAccessText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="If you are already listening to a song, please try to pause and restart the playback to trigger an update. If that doesn't help, you may try enabling notification access for this app to allow the app to retrieve the song name from the notification of your music player. If it still doesn't show the lyrics, you may create a bug report on GitHub."
+                    android:textColor="@color/colorLyricsText"
+                    android:layout_marginTop="50dp"
+                    android:textSize="16sp" />
+
+                <Button
+                    android:layout_marginTop="20dp"
+                    android:id="@+id/enableNotificationAccessButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Enable Notification Access"
+                    android:textColor="@color/colorLyricsText" />
+            </LinearLayout>
+
         </ScrollView>
     </LinearLayout>
 </RelativeLayout>

@@ -2,6 +2,7 @@ package sexy.lyrics;
 
 import static java.lang.Integer.max;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -15,6 +16,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.provider.Settings;
+import android.service.notification.NotificationListenerService;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.KeyEvent;
@@ -30,13 +34,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
 import androidx.core.util.Function;
 import androidx.core.view.DisplayCutoutCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.util.concurrent.Executors;
 
@@ -71,9 +76,29 @@ public class LyricsViewActivity extends AppCompatActivity {
         return re.toString().trim();
     }
 
+    public static boolean isNotificationServiceEnabled(Context context) {
+        String pkgName = context.getPackageName();
+        final String flat = Settings.Secure.getString(
+                context.getContentResolver(),
+                "enabled_notification_listeners"
+        );
+        if (!TextUtils.isEmpty(flat)) {
+            String[] names = flat.split(":");
+            for (String name : names) {
+                ComponentName cn = ComponentName.unflattenFromString(name);
+                if (cn != null && TextUtils.equals(pkgName, cn.getPackageName())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // Read theme preference before calling super.onCreate()
+        // Always use night mode
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        // Read theme preference and set theme before calling super.onCreate()
         SharedPreferences prefs = getSharedPreferences("settings", MODE_PRIVATE);
         boolean amoledTheme = prefs.getBoolean("amoled_theme", false);
         if (amoledTheme) {
@@ -81,7 +106,9 @@ public class LyricsViewActivity extends AppCompatActivity {
         } else {
             setTheme(R.style.AppTheme);
         }
+
         super.onCreate(savedInstanceState);
+
         binding = ActivityLyricsViewBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         setSupportActionBar(binding.toolbar);
@@ -145,6 +172,28 @@ public class LyricsViewActivity extends AppCompatActivity {
             }
             return false;
         });
+
+        // Button to enable notification access
+        binding.enableNotificationAccessButton.setOnClickListener(view -> {
+            Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        });
+
+        if (isNotificationServiceEnabled(this)) {
+            // Hide button
+            binding.enableNotificationAccessButton.setVisibility(View.GONE);
+            binding.notificationAccessText.setVisibility(View.GONE);
+            // Restart service
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                ComponentName cn = new ComponentName(this, NowPlayingListener.class);
+                NotificationListenerService.requestRebind(cn);
+            }
+        } else {
+            // Show button
+            binding.enableNotificationAccessButton.setVisibility(View.VISIBLE);
+            binding.notificationAccessText.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -155,7 +204,7 @@ public class LyricsViewActivity extends AppCompatActivity {
         getWindow().setNavigationBarColor(getResources().getColor(android.R.color.transparent));
     }
 
-    private void sendMediaButton(AudioManager audioManager,int keyCode) {
+    private void sendMediaButton(AudioManager audioManager, int keyCode) {
         long eventTime = SystemClock.uptimeMillis();
 
         KeyEvent downEvent = new KeyEvent(
@@ -235,12 +284,8 @@ public class LyricsViewActivity extends AppCompatActivity {
         if (currentLyrics != null) {
             url = currentLyrics.getUrl();
         } else if (localArtist != null && localTitle != null) {
-            try {
-                url = "https://genius.com/search?q="
-                        + URLEncoder.encode(localArtist + " " + localTitle, "utf-8");
-            } catch (UnsupportedEncodingException e) {
-                Log.e("openGeniusCom", "UnsupportedEncodingException", e);
-            }
+            url = "https://genius.com/search?q="
+                    + URLEncoder.encode(localArtist + " " + localTitle, StandardCharsets.UTF_8);
         }
 
         Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
@@ -445,35 +490,6 @@ public class LyricsViewActivity extends AppCompatActivity {
         }
     }
 
-    class OnSelectSong implements View.OnClickListener {
-        private final Genius.GeniusLookUpResult result;
-        private final String originalArtist;
-        private final String originalTitle;
-
-        OnSelectSong(Genius.GeniusLookUpResult result,
-                     String originalArtist,
-                     String originalTitle) {
-            this.result = result;
-            this.originalArtist = originalArtist;
-            this.originalTitle = originalTitle;
-        }
-
-        @Override
-        public void onClick(View view) {
-            hideSongSelector();
-
-            setActionBarTitle(R.string.loading);
-            setActionBarSubtitle(result.getTitle() + " " + getResources().getString(R.string.by_artist) + " " + result.getArtist());
-
-            new AsyncRunner(
-                    this.originalArtist,
-                    this.originalTitle,
-                    Integer.toString(result.getId()),
-                    BY_ID).run(LyricsViewActivity.this::showLyrics);
-
-        }
-    }
-
     private Lyrics loadLyrics(String... songData) {
         // Request type by number of parameter:
         // Normal request:  (2) artist, song
@@ -574,6 +590,8 @@ public class LyricsViewActivity extends AppCompatActivity {
     }
 
     private Void showLyrics(Lyrics result) {
+        binding.enableNotificationAccessButton.setVisibility(View.GONE);
+        binding.notificationAccessText.setVisibility(View.GONE);
         if (result.status()) {
             if (result.getLyrics() == null) {
                 genius.fetchLyricsFromWebAsync(result, updatedResult -> {
@@ -623,6 +641,51 @@ public class LyricsViewActivity extends AppCompatActivity {
         return null;
     }
 
+    private void saveFontSize(float fontSize) {
+        getSharedPreferences(SHARED_PREFERENCES_FILE, Context.MODE_PRIVATE)
+                .edit()
+                .putFloat("fontSize", fontSize)
+                .apply();
+    }
+
+    private void restoreFontSize() {
+        float value = getSharedPreferences(SHARED_PREFERENCES_FILE, Context.MODE_PRIVATE)
+                .getFloat("fontSize", -1);
+        if (value > 0) {
+            fontSize = value;
+            binding.result.setTextSize(TypedValue.COMPLEX_UNIT_PX, fontSize);
+        }
+    }
+
+    class OnSelectSong implements View.OnClickListener {
+        private final Genius.GeniusLookUpResult result;
+        private final String originalArtist;
+        private final String originalTitle;
+
+        OnSelectSong(Genius.GeniusLookUpResult result,
+                     String originalArtist,
+                     String originalTitle) {
+            this.result = result;
+            this.originalArtist = originalArtist;
+            this.originalTitle = originalTitle;
+        }
+
+        @Override
+        public void onClick(View view) {
+            hideSongSelector();
+
+            setActionBarTitle(R.string.loading);
+            setActionBarSubtitle(result.getTitle() + " " + getResources().getString(R.string.by_artist) + " " + result.getArtist());
+
+            new AsyncRunner(
+                    this.originalArtist,
+                    this.originalTitle,
+                    Integer.toString(result.getId()),
+                    BY_ID).run(LyricsViewActivity.this::showLyrics);
+
+        }
+    }
+
     private class AsyncRunner {
         private final String[] params;
 
@@ -642,20 +705,5 @@ public class LyricsViewActivity extends AppCompatActivity {
         }
     }
 
-    private void saveFontSize(float fontSize) {
-        getSharedPreferences(SHARED_PREFERENCES_FILE, Context.MODE_PRIVATE)
-                .edit()
-                .putFloat("fontSize", fontSize)
-                .apply();
-    }
-
-    private void restoreFontSize() {
-        float value = getSharedPreferences(SHARED_PREFERENCES_FILE, Context.MODE_PRIVATE)
-                .getFloat("fontSize", -1);
-        if (value > 0) {
-            fontSize = value;
-            binding.result.setTextSize(TypedValue.COMPLEX_UNIT_PX, fontSize);
-        }
-    }
 
 }

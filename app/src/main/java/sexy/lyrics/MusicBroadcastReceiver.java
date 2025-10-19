@@ -20,6 +20,28 @@ public class MusicBroadcastReceiver extends BroadcastReceiver {
     private String artist = null;
     private String track = null;
 
+    @NonNull
+    private static IntentFilter getIntentFilter(String[] musicApps) {
+        @SuppressWarnings("SpellCheckingInspection")
+        String[] musicActions = new String[]{
+                "metachanged",
+                "metadatachanged",
+                "playstatechange",
+                "playstatechanged",
+                "playbackstatechanged",
+                "queuechanged"
+        };
+
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(NowPlayingListener.ACTION_NOW_PLAYING);
+        for (String app : musicApps) {
+            for (String action : musicActions) {
+                intentFilter.addAction(app + "." + action);
+            }
+        }
+        return intentFilter;
+    }
+
     public boolean hasSong() {
         return artist != null && track != null;
     }
@@ -32,21 +54,18 @@ public class MusicBroadcastReceiver extends BroadcastReceiver {
         return track;
     }
 
-    @SuppressWarnings("SpellCheckingInspection")
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
-
-        try {
-            if ("com.amazon.mp3.metachanged".equals(action)) {
-                artist = intent.getStringExtra("com.amazon.mp3.artist");
-                track = intent.getStringExtra("com.amazon.mp3.track");
-            } else {
-                artist = intent.getStringExtra("artist");
-                track = intent.getStringExtra("track");
-            }
-        } catch (Throwable e) {
-            return;
+        PlayingInfo result;
+        if (NowPlayingListener.ACTION_NOW_PLAYING.equals(action)) {
+            result = parseInternalBroadcast(intent);
+        } else {
+            result = parseLegacyBroadcast(intent);
+        }
+        if (result != null) {
+            artist = result.artist();
+            track = result.title();
         }
         if (last == null || !last.equals(artist + ":" + track)) {
             last = artist + ":" + track;
@@ -55,6 +74,34 @@ public class MusicBroadcastReceiver extends BroadcastReceiver {
             if (lyricsViewActivity != null) {
                 lyricsViewActivity.loadLyrics(artist, track);
             }
+        }
+    }
+
+    private PlayingInfo parseInternalBroadcast(Intent intent) {
+        // From MediaSession listener
+        String artist = intent.getStringExtra(NowPlayingListener.EXTRA_ARTIST);
+        String track = intent.getStringExtra(NowPlayingListener.EXTRA_TITLE);
+        if (artist != null && artist.endsWith(" - Topic")) { // Youtube artists have this suffix
+            artist = artist.substring(0, artist.length() - 9);
+        }
+        return new PlayingInfo(artist, track);
+    }
+
+    private PlayingInfo parseLegacyBroadcast(Intent intent) {
+        String action = intent.getAction();
+        // Legacy broadcast from music apps
+        String artist, track;
+        try {
+            if ("com.amazon.mp3.metachanged".equals(action)) {
+                artist = intent.getStringExtra("com.amazon.mp3.artist");
+                track = intent.getStringExtra("com.amazon.mp3.track");
+            } else {
+                artist = intent.getStringExtra("artist");
+                track = intent.getStringExtra("track");
+            }
+            return new PlayingInfo(artist, track);
+        } catch (Throwable e) {
+            return null;
         }
     }
 
@@ -87,28 +134,6 @@ public class MusicBroadcastReceiver extends BroadcastReceiver {
         }
     }
 
-    @NonNull
-    private static IntentFilter getIntentFilter(String[] musicApps) {
-        @SuppressWarnings("SpellCheckingInspection")
-        String[] musicActions = new String[]{
-                "metachanged",
-                "metadatachanged",
-                "playstatechange",
-                "playstatechanged",
-                "playbackstatechanged",
-                "queuechanged"
-        };
-
-        IntentFilter intentFilter = new IntentFilter();
-
-        for (String app : musicApps) {
-            for (String action : musicActions) {
-                intentFilter.addAction(app + "." + action);
-            }
-        }
-        return intentFilter;
-    }
-
     public void unRegister() {
         Context context = this.activity.get();
         if (context != null) {
@@ -116,6 +141,9 @@ public class MusicBroadcastReceiver extends BroadcastReceiver {
             this.activity.clear();
         }
         this.activity = null;
+    }
+
+    private record PlayingInfo(String artist, String title) {
     }
 
 }
