@@ -82,7 +82,7 @@ public class MusicBroadcastReceiver extends BroadcastReceiver {
         String artist = intent.getStringExtra(NowPlayingListener.EXTRA_ARTIST);
         String track = intent.getStringExtra(NowPlayingListener.EXTRA_TITLE);
         if (artist != null && artist.endsWith(" - Topic")) { // Youtube artists have this suffix
-            artist = artist.substring(0, artist.length() - 9);
+            artist = artist.substring(0, artist.length() - 8);
         }
         return new PlayingInfo(artist, track);
     }
