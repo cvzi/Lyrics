@@ -66,6 +66,7 @@
                     android:text="If you are already listening to a song, please try to pause and restart the playback to trigger an update. If that doesn't help, you may try enabling notification access for this app to allow the app to retrieve the song name from the notification of your music player. If it still doesn't show the lyrics, you may create a bug report on GitHub."
                     android:textColor="@color/colorLyricsText"
                     android:layout_marginTop="50dp"
+                    android:visibility="gone"
                     android:textSize="16sp" />
 
                 <Button
@@ -74,6 +75,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Enable Notification Access"
+                    android:visibility="gone"
                     android:textColor="@color/colorLyricsText" />
             </LinearLayout>
 

@@ -16,9 +16,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
-import android.provider.Settings;
 import android.service.notification.NotificationListenerService;
-import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.KeyEvent;
@@ -42,7 +40,6 @@ import androidx.core.view.WindowInsetsCompat;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.util.concurrent.Executors;
 
@@ -75,24 +72,6 @@ public class LyricsViewActivity extends AppCompatActivity {
             re.append(line.trim()).append("\n");
         }
         return re.toString().trim();
-    }
-
-    public static boolean isNotificationServiceEnabled(Context context) {
-        String pkgName = context.getPackageName();
-        final String flat = Settings.Secure.getString(
-                context.getContentResolver(),
-                "enabled_notification_listeners"
-        );
-        if (!TextUtils.isEmpty(flat)) {
-            String[] names = flat.split(":");
-            for (String name : names) {
-                ComponentName cn = ComponentName.unflattenFromString(name);
-                if (cn != null && TextUtils.equals(pkgName, cn.getPackageName())) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     @Override
@@ -181,19 +160,25 @@ public class LyricsViewActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        if (isNotificationServiceEnabled(this)) {
-            // Hide button
-            binding.enableNotificationAccessButton.setVisibility(View.GONE);
-            binding.notificationAccessText.setVisibility(View.GONE);
-            // Restart service
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                ComponentName cn = new ComponentName(this, NowPlayingListener.class);
-                NotificationListenerService.requestRebind(cn);
-            }
-        } else {
+        // Only show the notification access message after 10 seconds, as the service is slow to start
+        if (prefs.getBoolean("first_app_run", true)) {
+            prefs.edit().putBoolean("first_app_run", false).apply();
             // Show button
             binding.enableNotificationAccessButton.setVisibility(View.VISIBLE);
             binding.notificationAccessText.setVisibility(View.VISIBLE);
+        } else {
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                if (NowPlayingListener.getInstance() != null) {
+                    Log.v("NowPlaying", "Notification access enabled");
+                    // Hide button
+                    binding.enableNotificationAccessButton.setVisibility(View.GONE);
+                    binding.notificationAccessText.setVisibility(View.GONE);
+                } else {
+                    // Show button
+                    binding.enableNotificationAccessButton.setVisibility(View.VISIBLE);
+                    binding.notificationAccessText.setVisibility(View.VISIBLE);
+                }
+            }, 10_000);
         }
     }
 

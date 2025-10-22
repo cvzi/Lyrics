@@ -8,6 +8,7 @@ import android.media.MediaMetadata;
 import android.media.session.MediaController;
 import android.media.session.MediaSessionManager;
 import android.media.session.PlaybackState;
+import android.os.IBinder;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.text.TextUtils;
@@ -32,6 +33,19 @@ public class NowPlayingListener extends NotificationListenerService
     private static final String TAG = "NowPlayingMS";
     private final List<Pair<MediaController, MediaController.Callback>> tracked = new ArrayList<>();
     private MediaSessionManager msm;
+
+    public static NowPlayingListener getInstance() {
+        return instance;
+    }
+
+    private static NowPlayingListener instance = null;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        Log.d(TAG, "onCreate()");
+        instance = this;
+    }
 
     @Override
     public void onListenerConnected() {
