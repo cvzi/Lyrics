@@ -1,0 +1,2 @@
+Add support for NewPipe
+Bugfix for NewPipe support by @klaurence
