@@ -72,7 +72,7 @@ public class MusicBroadcastReceiver extends BroadcastReceiver {
 
             LyricsViewActivity lyricsViewActivity = activity.get();
             if (lyricsViewActivity != null) {
-                lyricsViewActivity.loadLyrics(artist, track);
+                lyricsViewActivity.loadLyricsAsync(artist, track);
             }
         }
     }

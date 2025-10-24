@@ -2,7 +2,6 @@ package sexy.lyrics;
 
 import static java.lang.Integer.max;
 
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -16,7 +15,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
-import android.service.notification.NotificationListenerService;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.KeyEvent;
@@ -27,6 +25,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
@@ -34,18 +33,17 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
-import androidx.core.util.Function;
 import androidx.core.view.DisplayCutoutCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.Normalizer;
-import java.util.concurrent.Executors;
 
 import sexy.lyrics.databinding.ActivityLyricsViewBinding;
 
 public class LyricsViewActivity extends AppCompatActivity {
+    private static final String TAG = "Activity";
     private static final String BY_ID = "byId";
     private static final String NO_CACHE = "no_cache";
     private static final String NO_RESULTS = "#noresults";
@@ -117,7 +115,7 @@ public class LyricsViewActivity extends AppCompatActivity {
             genius = new Genius(this);
         } catch (Exception e) {
             setActionBarSubtitle("No API Key");
-            Log.e("Lyrics onCreate", "Could not find API Key");
+            Log.e(TAG, "Could not find API Key");
             return;
         }
 
@@ -133,11 +131,11 @@ public class LyricsViewActivity extends AppCompatActivity {
         }
 
         if (currentArtist != null && currentTitle != null) {
-            loadLyrics(currentArtist, currentTitle);
+            loadLyricsAsync(currentArtist, currentTitle);
         } else if (musicBroadcastReceiver.hasSong()) {
             currentTitle = musicBroadcastReceiver.getTrack();
             currentArtist = musicBroadcastReceiver.getArtist();
-            loadLyrics(currentArtist, currentTitle);
+            loadLyricsAsync(currentArtist, currentTitle);
         } else if (audioManager.isMusicActive()) {
             // Pause and immediately play music to trigger a broadcast of the current song
             sendMediaButton(audioManager, KeyEvent.KEYCODE_MEDIA_PAUSE);
@@ -169,7 +167,7 @@ public class LyricsViewActivity extends AppCompatActivity {
         } else {
             new Handler(Looper.getMainLooper()).postDelayed(() -> {
                 if (NowPlayingListener.getInstance() != null) {
-                    Log.v("NowPlaying", "Notification access enabled");
+                    Log.d(TAG, "Notification access enabled");
                     // Hide button
                     binding.enableNotificationAccessButton.setVisibility(View.GONE);
                     binding.notificationAccessText.setVisibility(View.GONE);
@@ -214,6 +212,7 @@ public class LyricsViewActivity extends AppCompatActivity {
         super.onDestroy();
         genius.close();
         musicBroadcastReceiver.unRegister();
+        AsyncLoadLyrics.shutdown();
     }
 
     @Override
@@ -236,11 +235,11 @@ public class LyricsViewActivity extends AppCompatActivity {
         final int itemId = item.getItemId();
         if (itemId == action_refresh) {
             if (currentTitle != null && currentArtist != null) {
-                loadLyrics(currentArtist, currentTitle);
+                loadLyricsAsync(currentArtist, currentTitle);
             }
         } else if (itemId == action_force_reload) {
             if (currentTitle != null && currentArtist != null) {
-                loadLyrics(currentArtist, currentTitle, false);
+                loadLyricsAsync(currentArtist, currentTitle, false);
             }
         } else if (itemId == action_view_website) {
             openGeniusCom(currentTitle, currentArtist);
@@ -264,6 +263,7 @@ public class LyricsViewActivity extends AppCompatActivity {
         return true;
     }
 
+    @SuppressWarnings("CharsetObjectCanBeUsed")
     private void openGeniusCom(String localArtist, String localTitle) {
         String url = "https://genius.com/";
 
@@ -283,11 +283,11 @@ public class LyricsViewActivity extends AppCompatActivity {
         }
     }
 
-    public void loadLyrics(String localArtist, String localTitle) {
-        loadLyrics(localArtist, localTitle, true);
+    public void loadLyricsAsync(String localArtist, String localTitle) {
+        loadLyricsAsync(localArtist, localTitle, true);
     }
 
-    private void loadLyrics(String localArtist, String localTitle, boolean useCache) {
+    private void loadLyricsAsync(String localArtist, String localTitle, boolean useCache) {
         currentArtist = localArtist;
         currentTitle = localTitle;
 
@@ -303,13 +303,17 @@ public class LyricsViewActivity extends AppCompatActivity {
 
         setActionBarTitle(R.string.loading);
         setActionBarSubtitle(localTitle + " " + getResources().getString(R.string.by_artist) + " " + localArtist);
+
         String[] param;
         if (useCache) {
             param = new String[]{localArtist, localTitle};
         } else {
             param = new String[]{localArtist, localTitle, NO_CACHE};
         }
-        new AsyncRunner(param).run(LyricsViewActivity.this::showLyrics);
+        AsyncLoadLyrics.run(this, param, LyricsViewActivity.this::showLyrics, error -> {
+            Log.e(TAG, "Failed to load lyrics 01", error);
+            Toast.makeText(this, "Failed to load lyrics: error01 " + error.getMessage(), Toast.LENGTH_SHORT).show();
+        });
     }
 
     private void hideSongSelector() {
@@ -415,8 +419,12 @@ public class LyricsViewActivity extends AppCompatActivity {
             setActionBarTitle(R.string.search);
             setActionBarSubtitle(searchArtist1 + " - " + searchTitle1);
 
-            new AsyncRunner(searchArtist1, searchTitle1, currentArtist, currentTitle)
-                    .run(LyricsViewActivity.this::showLyrics);
+            AsyncLoadLyrics.run(LyricsViewActivity.this,
+                    new String[]{searchArtist1, searchTitle1, currentArtist, currentTitle},
+                    LyricsViewActivity.this::showLyrics, error -> {
+                        Log.e(TAG, "Failed to load lyrics 01", error);
+                        Toast.makeText(this, "Failed to load lyrics: error01 " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
         };
     }
 
@@ -479,7 +487,7 @@ public class LyricsViewActivity extends AppCompatActivity {
         }
     }
 
-    private Lyrics loadLyrics(String... songData) {
+    public Lyrics loadLyricsBlocking(String... songData) {
         // Request type by number of parameter:
         // Normal request:  (2) artist, song
         // Nocache request: (3) artist, song, NO_CACHE
@@ -501,7 +509,7 @@ public class LyricsViewActivity extends AppCompatActivity {
                 Genius.GeniusLookUpResult[] results = activity.genius.lookUp(artist, song);
 
                 if (results.length == 0) {
-                    Log.d("loadLyrics", "Search again with broader search function");
+                    Log.d(TAG, "Search again with broader search function");
                     results = activity.genius.search(artist, song);
                 }
 
@@ -531,7 +539,7 @@ public class LyricsViewActivity extends AppCompatActivity {
             Genius.GeniusLookUpResult[] results = activity.genius.lookUp(searchArtist, searchTitle);
 
             if (results.length == 0) {
-                Log.d("loadLyrics", "Search again with broader search function");
+                Log.d(TAG, "Search again with broader search function");
                 results = activity.genius.search(searchArtist, searchTitle);
             }
 
@@ -549,10 +557,10 @@ public class LyricsViewActivity extends AppCompatActivity {
                     return noResultsLyrics;
                 } else {
                     // Search again without the diacritics
-                    Log.d("loadLyrics", "Search again without the diacritics");
+                    Log.d(TAG, "Search again without the diacritics");
                     results = activity.genius.lookUp(normalizedArtist, normalizedTitle);
                     if (results.length == 0) {
-                        Log.d("loadLyrics", "Search again without the diacritics with broader search function");
+                        Log.d(TAG, "Search again without the diacritics with broader search function");
                         results = activity.genius.search(searchArtist, searchTitle);
                     }
                     if (results.length == 0) {
@@ -578,7 +586,7 @@ public class LyricsViewActivity extends AppCompatActivity {
         }
     }
 
-    private Void showLyrics(Lyrics result) {
+    private void showLyrics(Lyrics result) {
         binding.enableNotificationAccessButton.setVisibility(View.GONE);
         binding.notificationAccessText.setVisibility(View.GONE);
         if (result.status()) {
@@ -596,7 +604,7 @@ public class LyricsViewActivity extends AppCompatActivity {
                     binding.scrollView.scrollTo(0, 0);
                     activity.currentLyrics = updatedResult;
                 });
-                return null;
+                return;
             }
             binding.result.setText(multiTrim(result.getLyrics()));
             activity.setActionBarTitle(result.getArtist() + " - " + result.getTitle());
@@ -627,7 +635,6 @@ public class LyricsViewActivity extends AppCompatActivity {
                     break;
             }
         }
-        return null;
     }
 
     private void saveFontSize(float fontSize) {
@@ -666,31 +673,10 @@ public class LyricsViewActivity extends AppCompatActivity {
             setActionBarTitle(R.string.loading);
             setActionBarSubtitle(result.getTitle() + " " + getResources().getString(R.string.by_artist) + " " + result.getArtist());
 
-            new AsyncRunner(
-                    this.originalArtist,
+            AsyncLoadLyrics.run(LyricsViewActivity.this, new String[]{this.originalArtist,
                     this.originalTitle,
                     Integer.toString(result.getId()),
-                    BY_ID).run(LyricsViewActivity.this::showLyrics);
-
-        }
-    }
-
-    private class AsyncRunner {
-        private final String[] params;
-
-        public AsyncRunner(String... songData) {
-            params = songData;
-        }
-
-        private void run(Function<Lyrics, Void> callback) {
-            try (var executor = Executors.newSingleThreadExecutor()) {
-                executor.execute(() -> {
-                    Lyrics result = loadLyrics(params);
-                    new Handler(Looper.getMainLooper()).post(() -> callback.apply(result));
-                });
-            } catch (Exception e) {
-                Log.e("AsyncRunner", "Error running async lyrics load", e);
-            }
+                    BY_ID}, LyricsViewActivity.this::showLyrics, error -> Log.e(TAG, "Failed to load lyrics 03", error));
         }
     }
 

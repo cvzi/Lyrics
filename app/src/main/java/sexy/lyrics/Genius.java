@@ -371,6 +371,7 @@ class Genius {
      * @param song   Title of song, as close as possible to actual title
      * @return Array of GeniusLookUpResult, empty if no results or errors occurred
      */
+    @SuppressWarnings("CharsetObjectCanBeUsed")
     GeniusLookUpResult[] search(String artist, String song) {
         final String TAG = "search()";
         try {
