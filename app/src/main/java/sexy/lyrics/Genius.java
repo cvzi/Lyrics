@@ -62,7 +62,7 @@ class Genius {
 
     /**
      * Extract lyrics from Genius.com HTML using the __PRELOADED_STATE__ JSON if present.
-     * See https://github.com/cvzi/genius-downloader/blob/master/id3rapgenius.py
+     * See <a href="https://github.com/cvzi/genius-downloader/blob/master/id3rapgenius.py">id3rapgenius.py</a>
      *
      * @param html HTML content of the Genius lyrics page
      * @return Extracted lyrics or null if not found

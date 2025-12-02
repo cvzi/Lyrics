@@ -22,6 +22,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -34,7 +35,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.DisplayCutoutCompat;
+import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -89,6 +92,7 @@ public class LyricsViewActivity extends AppCompatActivity {
 
         binding = ActivityLyricsViewBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        setupTransparentNavBar();
         setSupportActionBar(binding.toolbar);
 
         // Adjust toolbar for cutout on Android P+ and for Android 15 edge-to-edge mode
@@ -184,8 +188,26 @@ public class LyricsViewActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
         restoreFontSize();
+    }
 
-        getWindow().setNavigationBarColor(getResources().getColor(android.R.color.transparent));
+    private void setupTransparentNavBar() {
+
+        Window window = activity.getWindow();
+        if (Build.VERSION.SDK_INT >= 35) {
+            WindowCompat.setDecorFitsSystemWindows(window, false);
+            WindowInsetsControllerCompat controller =
+                    WindowCompat.getInsetsController(window, window.getDecorView());
+            controller.setAppearanceLightNavigationBars(false);
+        } else {
+            deprecatedNavigationBarColor(window);
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    private void deprecatedNavigationBarColor(Window window) {
+        window.setNavigationBarColor(
+                ContextCompat.getColor(activity, android.R.color.transparent)
+        );
     }
 
     private void sendMediaButton(AudioManager audioManager, int keyCode) {
@@ -440,9 +462,14 @@ public class LyricsViewActivity extends AppCompatActivity {
                     && networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
                     && networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
         } else {
-            NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-            return networkInfo != null;
+            return deprecatedOnline(connectivityManager);
         }
+    }
+
+    @SuppressWarnings("deprecation")
+    private boolean deprecatedOnline(ConnectivityManager connectivityManager) {
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        return networkInfo != null;
     }
 
     /**
@@ -496,7 +523,7 @@ public class LyricsViewActivity extends AppCompatActivity {
         String artist = songData[0];
         String song = songData[1];
         if (songData.length < 4) {
-            boolean useCache = songData.length <= 2 || !songData[2].equals(NO_CACHE);
+            boolean useCache = songData.length == 2 || !songData[2].equals(NO_CACHE);
 
             Lyrics cached = null;
             if (useCache) {
@@ -593,7 +620,7 @@ public class LyricsViewActivity extends AppCompatActivity {
             if (result.getLyrics() == null) {
                 genius.fetchLyricsFromWebAsync(result, updatedResult -> {
                     if (updatedResult.getLyrics() == null) {
-                        binding.result.setText("Error while extracting lyrics from genius.com website");
+                        binding.result.setText(R.string.error_while_scraping_lyrics);
                         activity.setActionBarSubtitle(R.string.sorry);
                         return;
                     }
