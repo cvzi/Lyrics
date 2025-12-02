@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Lyrics</string>
+    <string name="loading">正在加载…</string>
+    <string name="action_refresh">重新加载</string>
+    <string name="action_force_reload">从 genius.com 重新加载</string>
+    <string name="sorry">抱歉！</string>
+    <string name="by_artist">-</string>
+    <string name="please_select_lyrics">请选择正确的歌曲：</string>
+    <string name="action_make_font_smaller">减小字体大小</string>
+    <string name="action_make_font_bigger">增大字体大小</string>
+    <string name="action_view_website">在 genius.com 上打开</string>
+    <string name="action_search">搜索/歌词错误</string>
+    <string name="search">搜索</string>
+    <string name="artist_colon">歌手：</string>
+    <string name="title_colon">标题：</string>
+    <string name="search_more_results">使用其他标题/歌手搜索：</string>
+    <string name="sorry_no_results">抱歉，没有结果。</string>
+    <string name="sorry_no_search_results">抱歉，没有搜索结果。</string>
+    <string name="search_go">搜索</string>
+    <string name="action_switch_theme">切换 AMOLED 主题</string>
+    <string name="error_while_scraping_lyrics">从 genius.com 获取歌词时发生错误</string>
+</resources>

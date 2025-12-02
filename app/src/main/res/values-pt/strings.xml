@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Lyrics</string>
+    <string name="loading">A carregar…</string>
+    <string name="action_refresh">Atualizar</string>
+    <string name="action_force_reload">Recarregar do genius.com</string>
+    <string name="sorry">Desculpe!</string>
+    <string name="by_artist">de</string>
+    <string name="please_select_lyrics">Por favor, escolha a música correta:</string>
+    <string name="action_make_font_smaller">Diminuir o tamanho da fonte</string>
+    <string name="action_make_font_bigger">Aumentar o tamanho da fonte</string>
+    <string name="action_view_website">Abrir no genius.com</string>
+    <string name="action_search">Pesquisar/Letras incorretas</string>
+    <string name="search">Pesquisar</string>
+    <string name="artist_colon">Artista:</string>
+    <string name="title_colon">Título:</string>
+    <string name="search_more_results">Pesquisar com outro título/artista:</string>
+    <string name="sorry_no_results">Desculpe, nenhum resultado encontrado.</string>
+    <string name="sorry_no_search_results">Desculpe, nenhum resultado de pesquisa.</string>
+    <string name="search_go">Pesquisar</string>
+    <string name="action_switch_theme">Alterar tema AMOLED</string>
+    <string name="error_while_scraping_lyrics">Erro ao obter a letra no site genius.com</string>
+</resources>

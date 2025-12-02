@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Lyrics</string>
+    <string name="loading">טוען…</string>
+    <string name="action_refresh">טען מחדש את הדף</string>
+    <string name="action_force_reload">טען מחדש מ-genius.com</string>
+    <string name="action_search">חיפוש / מילות שיר שגויות</string>
+    <string name="action_view_website">צפה ב-genius.com</string>
+    <string name="action_make_font_smaller">הקטן את גודל הגופן</string>
+    <string name="action_make_font_bigger">הגדל את גודל הגופן</string>
+    <string name="by_artist">מאת</string>
+    <string name="sorry">סליחה!</string>
+    <string name="please_select_lyrics">אנא בחר את הערך הנכון:</string>
+    <string name="search">חיפוש</string>
+    <string name="search_go">חפש</string>
+    <string name="artist_colon">אמן:</string>
+    <string name="title_colon">שם השיר:</string>
+    <string name="search_more_results">חפש עם שם/אמן אחר:</string>
+    <string name="sorry_no_results">סליחה, אין תוצאות.</string>
+    <string name="sorry_no_search_results">סליחה, לא נמצאו תוצאות חיפוש.</string>
+    <string name="artist_minus_title" translatable="false">%s - %s</string>
+    <string name="x_newline_y" translatable="false">%s\n%s</string>
+    <string name="action_switch_theme">החלף ערכת נושא AMOLED</string>
+    <string name="error_while_scraping_lyrics">שגיאה בעת חילוץ מילות השיר מאתר genius.com</string>
+</resources>

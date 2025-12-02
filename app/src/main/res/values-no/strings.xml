@@ -1,22 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Lyrics</string>
-    <string name="action_force_reload">Laster ned fra genius.com</string>
+    <string name="action_force_reload">Last inn på nytt fra genius.com</string>
     <string name="action_refresh">Oppdatere</string>
-    <string name="loading">Laster ned…</string>
+    <string name="loading">Laster inn…</string>
     <string name="sorry">Sorry!</string>
-    <string name="by_artist">fra</string>
-    <string name="please_select_lyrics">Velge riktig sang:</string>
-    <string name="action_make_font_smaller">Redusere skriftstørrelsen</string>
-    <string name="action_make_font_bigger">Øke skriftstørrelsen</string>
+    <string name="by_artist">av</string>
+    <string name="please_select_lyrics">Velg riktig sang:</string>
+    <string name="action_make_font_smaller">Reduser skriftstørrelsen</string>
+    <string name="action_make_font_bigger">Øk skriftstørrelsen</string>
     <string name="action_view_website">Åpne på genius.com</string>
     <string name="sorry_no_search_results">Sorry, ingen søkeresultater.</string>
     <string name="sorry_no_results">Sorry, ingen resultater.</string>
-    <string name="search_more_results">Søk med andre tittel/kunstner:</string>
+    <string name="search_more_results">Søk med en annen tittel/kunstner:</string>
     <string name="title_colon">Tittel:</string>
     <string name="artist_colon">Kunstner:</string>
     <string name="search">Søk</string>
-    <string name="action_search">Søk/feil tekst</string>
+    <string name="action_search">Søk/feil sangtekst</string>
     <string name="search_go">Søk</string>
     <string name="action_switch_theme">Bytt AMOLED-tema</string>
+    <string name="error_while_scraping_lyrics">Feil under henting av sangtekst fra genius.com</string>
 </resources>

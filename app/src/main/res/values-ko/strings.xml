@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Lyrics</string>
+    <string name="loading">로딩 중…</string>
+    <string name="action_refresh">새로고침</string>
+    <string name="action_force_reload">genius.com에서 다시 불러오기</string>
+    <string name="sorry">죄송합니다!</string>
+    <string name="by_artist">-</string>
+    <string name="please_select_lyrics">올바른 노래를 선택하세요:</string>
+    <string name="action_make_font_smaller">글자 크기 줄이기</string>
+    <string name="action_make_font_bigger">글자 크기 키우기</string>
+    <string name="action_view_website">genius.com에서 열기</string>
+    <string name="action_search">검색 / 잘못된 가사</string>
+    <string name="search">검색</string>
+    <string name="artist_colon">아티스트:</string>
+    <string name="title_colon">제목:</string>
+    <string name="search_more_results">다른 제목/아티스트로 검색:</string>
+    <string name="sorry_no_results">죄송합니다. 결과가 없습니다.</string>
+    <string name="sorry_no_search_results">죄송합니다. 검색 결과가 없습니다.</string>
+    <string name="search_go">검색</string>
+    <string name="action_switch_theme">AMOLED 테마 전환</string>
+    <string name="error_while_scraping_lyrics">genius.com에서 가사를 불러오는 중 오류가 발생했습니다</string>
+</resources>

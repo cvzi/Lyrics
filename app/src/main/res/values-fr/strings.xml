@@ -1,22 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Lyrics</string>
-    <string name="action_force_reload">Mettre à jour via genius.com</string>
-    <string name="action_refresh">Mettre à jour</string>
-    <string name="loading">Téléchargeant…</string>
+    <string name="action_force_reload">Recharger depuis genius.com</string>
+    <string name="action_refresh">Recharger</string>
+    <string name="loading">Chargement…</string>
     <string name="sorry">Désolé!</string>
     <string name="by_artist">de</string>
     <string name="please_select_lyrics">Choisis la chanson correcte:</string>
     <string name="action_make_font_smaller">Réduire la taille du texte</string>
     <string name="action_make_font_bigger">Agrandir la taille du texte</string>
-    <string name="action_view_website">Ouvir genius.com</string>
-    <string name="action_search">Chercher/faux texte</string>
-    <string name="search">Chercher</string>
+    <string name="action_view_website">Ouvrir genius.com</string>
+    <string name="action_search">Chercher/mauvaises paroles</string>
+    <string name="search">Rechercher</string>
     <string name="artist_colon">Artiste:</string>
     <string name="title_colon">Titre:</string>
-    <string name="search_more_results">Chercher d\'autres titre/artiste:</string>
+    <string name="search_more_results">Chercher un autre titre/artiste:</string>
     <string name="sorry_no_results">Pardon, pas de résultats.</string>
     <string name="sorry_no_search_results">Pardon, pas de résultats de recherche.</string>
     <string name="search_go">Cherche</string>
-    <string name="action_switch_theme">Thème AMOLED</string>
+    <string name="action_switch_theme">Changer le thème AMOLED</string>
+    <string name="error_while_scraping_lyrics">Erreur lors de l\'extraction des paroles du site genius.com</string>
 </resources>

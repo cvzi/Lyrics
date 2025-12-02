@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Lyrics</string>
     <string name="loading">Laden…</string>
@@ -15,7 +16,8 @@
     <string name="search_more_results">Suche mit anderem Titel/Künstler:</string>
     <string name="sorry_no_results">Sorry, keine Ergebnisse.</string>
     <string name="sorry_no_search_results">Sorry, keine Suchergebnisse.</string>
-    <string name="action_search">Suche/Falscher Text</string>
+    <string name="action_search">Suche/Falscher Liedtext</string>
     <string name="search_go">Suchen</string>
-    <string name="action_switch_theme">AMOLED-Design</string>
+    <string name="action_switch_theme">AMOLED-Design umschalten</string>
+    <string name="error_while_scraping_lyrics">Fehler beim Abrufen der Liedtexte von genius.com</string>
 </resources>

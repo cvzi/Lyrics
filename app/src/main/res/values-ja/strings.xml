@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Lyrics</string>
+    <string name="loading">読み込み中…</string>
+    <string name="action_refresh">再読み込み</string>
+    <string name="action_force_reload">genius.com から再読み込み</string>
+    <string name="sorry">すみません！</string>
+    <string name="by_artist">（アーティスト）</string>
+    <string name="please_select_lyrics">正しい曲を選択してください：</string>
+    <string name="action_make_font_smaller">文字サイズを小さくする</string>
+    <string name="action_make_font_bigger">文字サイズを大きくする</string>
+    <string name="action_view_website">genius.com を開く</string>
+    <string name="action_search">検索／歌詞が違う</string>
+    <string name="search">検索</string>
+    <string name="artist_colon">アーティスト：</string>
+    <string name="title_colon">タイトル：</string>
+    <string name="search_more_results">別のタイトル／アーティストで検索：</string>
+    <string name="sorry_no_results">すみません、結果がありません。</string>
+    <string name="sorry_no_search_results">すみません、検索結果がありません。</string>
+    <string name="search_go">検索</string>
+    <string name="action_switch_theme">AMOLED テーマを切り替える</string>
+    <string name="error_while_scraping_lyrics">genius.com から歌詞を取得中にエラーが発生しました</string>
+</resources>

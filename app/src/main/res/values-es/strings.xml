@@ -1,21 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Lyrics</string>
-    <string name="loading">Esperando carga…</string>
+    <string name="loading">Cargando…</string>
     <string name="action_refresh">Actualizar</string>
-    <string name="action_force_reload">Descargar de genius.com</string>
+    <string name="action_force_reload">Recargar desde genius.com</string>
     <string name="sorry">¡Perdón!</string>
     <string name="by_artist">de</string>
     <string name="please_select_lyrics">Por favor, elige la canción correcta:</string>
     <string name="action_make_font_bigger">Aumentar fuente</string>
     <string name="action_make_font_smaller">Reducir fuente</string>
     <string name="action_view_website">Abrir en genius.com</string>
-    <string name="action_search">Buscar/Texto equivocado</string>
-    <string name="search">Búsqueda</string>
+    <string name="action_search">Buscar/Letras incorrectas</string>
+    <string name="search">Buscar</string>
     <string name="artist_colon">Artista:</string>
     <string name="title_colon">Título:</string>
-    <string name="search_more_results">Busca con otra artista/título:</string>
+    <string name="search_more_results">Buscar con otro título/artista:</string>
     <string name="sorry_no_results">Lo siento, no hay resultados.</string>
     <string name="sorry_no_search_results">Lo siento, no hay resultados de búsqueda.</string>
     <string name="search_go">Buscar</string>
     <string name="action_switch_theme">Cambiar tema AMOLED</string>
+    <string name="error_while_scraping_lyrics">Error al extraer las letras de genius.com</string>
 </resources>

@@ -22,4 +22,5 @@
     <string name="artist_minus_title" translatable="false">%s - %s</string>
     <string name="x_newline_y" translatable="false">%s\n%s</string>
     <string name="action_switch_theme">Toggle AMOLED theme</string>
+    <string name="error_while_scraping_lyrics">Error while extracting lyrics from genius.com website</string>
 </resources>
