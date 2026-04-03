@@ -19,5 +19,6 @@
     <string name="sorry_no_search_results">Pardon, pas de résultats de recherche.</string>
     <string name="search_go">Cherche</string>
     <string name="action_switch_theme">Changer le thème AMOLED</string>
+    <string name="action_change_padding">Modifier le padding</string>
     <string name="error_while_scraping_lyrics">Erreur lors de l\'extraction des paroles du site genius.com</string>
 </resources>

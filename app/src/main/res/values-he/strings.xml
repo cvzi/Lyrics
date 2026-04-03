@@ -21,5 +21,6 @@
     <string name="artist_minus_title" translatable="false">%s - %s</string>
     <string name="x_newline_y" translatable="false">%s\n%s</string>
     <string name="action_switch_theme">החלף ערכת נושא AMOLED</string>
+    <string name="action_change_padding">שנה רווח פנימי</string>
     <string name="error_while_scraping_lyrics">שגיאה בעת חילוץ מילות השיר מאתר genius.com</string>
 </resources>

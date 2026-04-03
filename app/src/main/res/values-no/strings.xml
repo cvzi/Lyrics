@@ -19,5 +19,6 @@
     <string name="action_search">Søk/feil sangtekst</string>
     <string name="search_go">Søk</string>
     <string name="action_switch_theme">Bytt AMOLED-tema</string>
+    <string name="action_change_padding">Endre padding</string>
     <string name="error_while_scraping_lyrics">Feil under henting av sangtekst fra genius.com</string>
 </resources>

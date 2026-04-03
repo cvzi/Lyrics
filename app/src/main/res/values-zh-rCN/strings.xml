@@ -19,5 +19,6 @@
     <string name="sorry_no_search_results">抱歉，没有搜索结果。</string>
     <string name="search_go">搜索</string>
     <string name="action_switch_theme">切换 AMOLED 主题</string>
+    <string name="action_change_padding">更改屏幕内边距</string>
     <string name="error_while_scraping_lyrics">从 genius.com 获取歌词时发生错误</string>
 </resources>

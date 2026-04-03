@@ -19,5 +19,6 @@
     <string name="sorry_no_search_results">죄송합니다. 검색 결과가 없습니다.</string>
     <string name="search_go">검색</string>
     <string name="action_switch_theme">AMOLED 테마 전환</string>
+    <string name="action_change_padding">패딩 변경</string>
     <string name="error_while_scraping_lyrics">genius.com에서 가사를 불러오는 중 오류가 발생했습니다</string>
 </resources>
