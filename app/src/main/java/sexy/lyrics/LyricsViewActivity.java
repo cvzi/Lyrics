@@ -34,6 +34,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
 import androidx.core.view.DisplayCutoutCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -65,6 +66,7 @@ public class LyricsViewActivity extends AppCompatActivity {
     private float fontSize = 0;
     private AudioManager audioManager = null;
     private ActivityLyricsViewBinding binding;
+    private final int[] paddings = {5, 10, 25, 50, 75, 100};
 
     private static String multiTrim(String str) {
         String[] lines = str.split("\\r?\\n");
@@ -188,6 +190,7 @@ public class LyricsViewActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
         restoreFontSize();
+        restorePadding();
     }
 
     private void setupTransparentNavBar() {
@@ -253,6 +256,8 @@ public class LyricsViewActivity extends AppCompatActivity {
         final int action_make_font_bigger = R.id.action_make_font_bigger;
         final int action_make_font_smaller = R.id.action_make_font_smaller;
         final int action_toggle_theme = R.id.action_toggle_theme;
+        final int action_change_padding = R.id.action_change_padding;
+
 
         final int itemId = item.getItemId();
         if (itemId == action_refresh) {
@@ -281,6 +286,21 @@ public class LyricsViewActivity extends AppCompatActivity {
             prefs.edit().putBoolean("amoled_theme", !amoledTheme).apply();
             recreate();
             return true;
+        } else if (itemId == action_change_padding) {
+            int current = binding.scrollView.getPaddingLeft();
+            int next = paddings[0];
+            for (int i : paddings) {
+                if (i > current) {
+                    next = i;
+                    break;
+                }
+            }
+            binding.scrollView.setPadding(
+                    next,
+                    binding.scrollView.getPaddingTop(),
+                    next,
+                    binding.scrollView.getPaddingBottom());
+            savePadding(next);
         }
         return true;
     }
@@ -677,6 +697,25 @@ public class LyricsViewActivity extends AppCompatActivity {
         if (value > 0) {
             fontSize = value;
             binding.result.setTextSize(TypedValue.COMPLEX_UNIT_PX, fontSize);
+        }
+    }
+
+    private void savePadding(int padding) {
+        getSharedPreferences(SHARED_PREFERENCES_FILE, Context.MODE_PRIVATE)
+                .edit()
+                .putInt("padding", padding)
+                .apply();
+    }
+
+    private void restorePadding() {
+        int value = getSharedPreferences(SHARED_PREFERENCES_FILE, Context.MODE_PRIVATE)
+                .getInt("padding", -1);
+        if (value >= 0) {
+            binding.scrollView.setPadding(
+                    value,
+                    binding.scrollView.getPaddingTop(),
+                    value,
+                    binding.scrollView.getPaddingBottom());
         }
     }
 

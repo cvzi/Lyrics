@@ -44,4 +44,8 @@
         android:title="@string/action_switch_theme"
         app:showAsAction="never" />
 
+    <item
+        android:id="@+id/action_change_padding"
+        android:title="@string/action_change_padding"
+        app:showAsAction="never" />
 </menu>
