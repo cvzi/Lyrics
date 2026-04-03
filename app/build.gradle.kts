@@ -4,14 +4,14 @@ plugins {
 
 android {
     namespace = "sexy.lyrics"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "sexy.lyrics"
         minSdk = 21
-        targetSdk = 36
-        versionCode = 16
-        versionName = "10.2"
+        targetSdk = 37
+        versionCode = 17
+        versionName = "11.0"
     }
     if (project.hasProperty("keystore")) {
         signingConfigs {
@@ -35,7 +35,7 @@ android {
                 enableV1Signing = true
                 enableV2Signing = true
                 enableV3Signing = true
-           }
+            }
         }
     }
     buildTypes {
