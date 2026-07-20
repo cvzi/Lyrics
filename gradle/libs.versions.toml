@@ -2,7 +2,7 @@
 agp = "9.3.0"
 kotlin = "2.4.10"
 appcompat = "1.7.1"
-material = "1.13.0"
+material = "1.14.0"
 
 [libraries]
 org-jetbrains-kotlin-kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom", version.ref = "kotlin" }
